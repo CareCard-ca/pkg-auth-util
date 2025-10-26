@@ -1,36 +1,22 @@
 {
-  "name": "@carecard/auth-util",
-  "version": "3.1.13",
-  "repository": "https://github.com/CareCard-ca/pkg-auth-util.git",
+  "name": "@onspark/auth-util",
+  "version": "0.0.1",
+  "repository": "https://github.com/onspark/pkg-auth-util",
   "description": "Auth utility functions",
   "main": "index.js",
-  "types": "index.d.ts",
   "scripts": {
-    "test": "export NODE_ENV=test && mocha --recursive",
-    "test:types": "tsc --noEmit && mocha -r ts-node/register test/types.test.ts",
-    "test:coverage": "tsc --noEmit && export NODE_ENV=test && nyc mocha --recursive -r ts-node/register 'test/**/*.{js,ts}'",
-    "prepare": "husky"
+    "test": "export NODE_ENV=test && mocha --watch --recursive"
   },
   "keywords": [
     "auth",
     "utility",
-    "cryptology",
-    "jwt"
+    "cryptology"
   ],
-  "author": "CareCard team",
+  "author": "OnSPARK team",
   "license": "ISC",
   "devDependencies": {
-    "@types/express": "5.0.6",
-    "@types/mocha": "10.0.10",
-    "@types/node": "25.5.0",
-    "husky": "^9.1.7",
-    "mocha": "11.7.5",
-    "nyc": "^18.0.0",
-    "ts-node": "10.9.2",
-    "typescript": "5.9.3"
+    "mocha": "10.2.0"
   },
   "dependencies": {
-    "@carecard/common-util": "3.1.11",
-    "@carecard/validate": "3.0.11"
   }
 }
