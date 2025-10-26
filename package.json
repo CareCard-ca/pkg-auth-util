@@ -1,7 +1,7 @@
 {
   "name": "@onspark/auth-util",
   "version": "0.0.1",
-  "repository": "https://github.com/onspark/pkg-auth-util",
+  "repository": "https://github.com/OnSPARK-CA/pkg-auth-util.git",
   "description": "Auth utility functions",
   "main": "index.js",
   "scripts": {
