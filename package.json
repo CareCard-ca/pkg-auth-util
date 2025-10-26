@@ -1,0 +1,22 @@
+{
+  "name": "@chatpta/auth-util",
+  "version": "3.0.21",
+  "repository": "https://github.com/chatpta/pkg-auth-util",
+  "description": "Auth utility functions",
+  "main": "index.js",
+  "scripts": {
+    "test": "export NODE_ENV=test && mocha --watch --recursive"
+  },
+  "keywords": [
+    "auth",
+    "utility",
+    "cryptology"
+  ],
+  "author": "Chatpta team",
+  "license": "ISC",
+  "devDependencies": {
+    "mocha": "10.2.0"
+  },
+  "dependencies": {
+  }
+}
