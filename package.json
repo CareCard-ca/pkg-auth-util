@@ -1,7 +1,7 @@
 {
-  "name": "@chatpta/auth-util",
-  "version": "3.0.21",
-  "repository": "https://github.com/chatpta/pkg-auth-util",
+  "name": "@onspark/auth-util",
+  "version": "0.0.1",
+  "repository": "https://github.com/onspark/pkg-auth-util",
   "description": "Auth utility functions",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
     "utility",
     "cryptology"
   ],
-  "author": "Chatpta team",
+  "author": "OnSPARK team",
   "license": "ISC",
   "devDependencies": {
     "mocha": "10.2.0"
