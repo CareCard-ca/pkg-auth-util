@@ -22,7 +22,7 @@ describe('PwdUtilAuth test', function () {
 
     assert.deepStrictEqual(salt, saltBase64);
     assert.deepStrictEqual(hash, hashBase64);
-    assert.deepStrictEqual(version, "1");
+    assert.deepStrictEqual(version, '1');
     assert.deepStrictEqual(alg, 'c2hhMjU2');
   });
 
