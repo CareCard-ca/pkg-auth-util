@@ -1,22 +1,54 @@
 {
-  "name": "@onspark/auth-util",
-  "version": "0.0.1",
-  "repository": "https://github.com/OnSPARK-CA/pkg-auth-util.git",
+  "name": "@carecard/auth-util",
+  "version": "1.0.0",
+  "private": false,
   "description": "Auth utility functions",
-  "main": "index.js",
-  "scripts": {
-    "test": "export NODE_ENV=test && mocha --watch --recursive"
+  "license": "ISC",
+  "author": "PK Singh",
+  "repository": {
+    "type": "git",
+    "url": "git+https:github.com/CareCard-ca/pkg-auth-util.git"
   },
   "keywords": [
     "auth",
     "utility",
     "cryptology"
   ],
-  "author": "OnSPARK team",
-  "license": "ISC",
-  "devDependencies": {
-    "mocha": "10.2.0"
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
   },
-  "dependencies": {
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs",
+      "types": "./dist/esm/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json && node ./scripts/rename-cjs.js",
+    "test": "NODE_NO_WARNINGS=1 jest --coverage",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@types/jest": "30.0.0",
+    "eslint": "9.39.2",
+    "husky": "9.1.7",
+    "jest": "30.2.0",
+    "prettier": "3.7.4",
+    "ts-jest": "29.4.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.50.1"
   }
 }
