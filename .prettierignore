@@ -1,0 +1,17 @@
+dist/
+coverage/
+node_modules/
+build/
+*.min.js
+.github
+.husky
+dist
+.gitignore
+.npmignore
+.prettierignore
+.prettierrc.js
+eslint.config.mjs
+jest.config.js
+package.json
+readme.md
+rename-cjs.js

@@ -1,0 +1,8 @@
+# Full repository owner
+@singh-pankaj-k
+
+# Specific owners for certain files
+.github/CODEOWNERS @singh-pankaj-k
+
+
+
