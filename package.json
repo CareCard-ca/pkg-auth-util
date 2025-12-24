@@ -1,7 +1,7 @@
 {
-  "name": "@onspark/auth-util",
-  "version": "0.0.1",
-  "repository": "https://github.com/OnSPARK-CA/pkg-auth-util.git",
+  "name": "@carecard/auth-util",
+  "version": "2.0.1",
+  "repository": "https://github.com/CareCard-ca/pkg-auth-util.git",
   "description": "Auth utility functions",
   "main": "index.js",
   "scripts": {
@@ -12,11 +12,9 @@
     "utility",
     "cryptology"
   ],
-  "author": "OnSPARK team",
+  "author": "CareCard team",
   "license": "ISC",
   "devDependencies": {
-    "mocha": "10.2.0"
-  },
-  "dependencies": {
+    "mocha": "^10.8.2"
   }
 }
