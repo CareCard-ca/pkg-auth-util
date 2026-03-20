@@ -1,6 +1,6 @@
 {
   "name": "@carecard/auth-util",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "repository": "https://github.com/CareCard-ca/pkg-auth-util.git",
   "description": "Auth utility functions",
   "main": "index.js",
@@ -15,6 +15,6 @@
   "author": "CareCard team",
   "license": "ISC",
   "devDependencies": {
-    "mocha": "^10.8.2"
+    "mocha": "11.7.5"
   }
 }
