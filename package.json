@@ -1,11 +1,13 @@
 {
   "name": "@carecard/auth-util",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "repository": "https://github.com/CareCard-ca/pkg-auth-util.git",
   "description": "Auth utility functions",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
-    "test": "export NODE_ENV=test && mocha --watch --recursive"
+    "test": "export NODE_ENV=test && mocha --watch --recursive",
+    "test:types": "tsc --noEmit && mocha -r ts-node/register test/types.test.ts"
   },
   "keywords": [
     "auth",
@@ -15,6 +17,8 @@
   "author": "CareCard team",
   "license": "ISC",
   "devDependencies": {
-    "mocha": "11.7.5"
+    "mocha": "11.7.5",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3"
   }
 }
