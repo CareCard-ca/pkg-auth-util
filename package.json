@@ -17,6 +17,8 @@
   "author": "CareCard team",
   "license": "ISC",
   "devDependencies": {
+    "@types/mocha": "10.0.10",
+    "@types/node": "25.5.0",
     "mocha": "11.7.5",
     "ts-node": "10.9.2",
     "typescript": "5.9.3"
