@@ -143,26 +143,20 @@ export const pwdUtilAuth: {
      * @param password - The plain-text password to hash.
      * @param secret - A pepper/secret key to combine with the password.
      * @param algorithm - The hashing algorithm to use (e.g., 'sha256').
-     * @returns A string containing the formatted hash with metadata ($1$alg$hash$salt$).
+     * @returns A string containing the formatted hash with metadata ($1$alg$hash$salt$) or null if an error occurs.
      */
-    createPasswordHashWithRandomSalt: (password: string, secret: string, algorithm: string) => string;
+    createPasswordHashWithRandomSalt: (password: string, secret: string, algorithm: string) => string | null;
     /**
      * Generates a password hash using the same algorithm and salt from a previously saved hash.
      * Useful for verifying a password against a stored hash.
      * @param password - The plain-text password to verify.
      * @param savedPasswordHash - The full stored hash string (including salt and metadata).
      * @param secret - The pepper/secret key used for hashing.
-     * @returns A hash string that should match the saved hash if the password is correct.
+     * @returns A hash string that should match the saved hash if the password is correct, or null if an error occurs.
      */
-    createPasswordHashBasedOnSavedAlgorithmSalt: (password: string, savedPasswordHash: string, secret: string) => string;
+    createPasswordHashBasedOnSavedAlgorithmSalt: (password: string, savedPasswordHash: string, secret: string) => string | null;
 };
 
-/**
- * Generates a public/private key pair for JWT signing.
- * @param algorithm - The algorithm to use ('ed25519' or 'rsa'). Defaults to 'ed25519'.
- * @returns A KeyPair object containing PEM formatted keys.
- */
-export const createKeys: (algorithm?: 'ed25519' | 'rsa' | string) => KeyPair;
 
 /**
  * Utility functions for string manipulation, base64 encoding, and parsing auth-related strings.
@@ -232,12 +226,54 @@ export const stringUtilAuth: {
 };
 
 
+/**
+ * Generates a public/private key pair for JWT signing.
+ * @param algorithm - The algorithm to use ('ed25519' or 'rsa'). Defaults to 'ed25519'.
+ * @returns A KeyPair object containing PEM formatted keys.
+ */
+export function generateKeyPair(algorithm?: 'ed25519' | 'rsa' | string): KeyPair;
+
+/**
+ * Creates a signed JWT from header and payload objects.
+ * Automatically normalizes header (sets alg/typ) and payload (sets iat/exp/etc. in seconds).
+ * @param headerObject - Header data for the JWT.
+ * @param payloadObject - Payload data for the JWT.
+ * @param privateKey - PEM formatted private key to sign the token.
+ * @returns Signed JWT string or null if an error occurs.
+ */
 export function jwtCreateSignedFromObject(headerObject: JwtHeader, payloadObject: JwtPayload, privateKey: string): string | null;
 
+/**
+ * Verifies the signature of a JWT using a public key.
+ * @param jwt - The JWT string to verify.
+ * @param publicKey - PEM formatted public key.
+ * @returns True if the signature is valid, false otherwise.
+ */
 export function jwtVerifySignature(jwt: string, publicKey: string): boolean;
 
+/**
+ * Decodes a JWT and returns its header and payload as objects.
+ * Note: This does NOT verify the signature.
+ * @param jwt - The JWT string to parse.
+ * @returns An object containing the header and payload, or null if parsing fails.
+ */
 export function jwtGetHeaderPayloadFromJwt(jwt: string): JwtParts | null;
 
-export function passwordCreateHashWithRandomSalt(password: string, secret: string, algorithm: string): string;
+/**
+ * Generates a password hash using a random salt and specified algorithm.
+ * @param password - The plain-text password to hash.
+ * @param secret - A pepper/secret key to combine with the password.
+ * @param algorithm - The hashing algorithm to use (e.g., 'sha256').
+ * @returns A string containing the formatted hash with metadata ($1$alg$hash$salt$) or null if an error occurs.
+ */
+export function passwordCreateHashWithRandomSalt(password: string, secret: string, algorithm: string): string | null;
 
-export function passwordCreateHashBasedOnSavedAlgorithmSalt(password: string, savedPasswordHash: string, secret: string): string;
+/**
+ * Generates a password hash using the same algorithm and salt from a previously saved hash.
+ * Useful for verifying a password against a stored hash.
+ * @param password - The plain-text password to verify.
+ * @param savedPasswordHash - The full stored hash string (including salt and metadata).
+ * @param secret - The pepper/secret key used for hashing.
+ * @returns A hash string that should match the saved hash if the password is correct, or null if an error occurs.
+ */
+export function passwordCreateHashBasedOnSavedAlgorithmSalt(password: string, savedPasswordHash: string, secret: string): string | null;

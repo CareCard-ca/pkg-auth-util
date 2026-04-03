@@ -61,13 +61,13 @@ const isCorrect = (pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(passw
 ### Key Generation
 
 ```javascript
-const { createKeys } = require('@carecard/auth-util');
+const { generateKeyPair } = require('@carecard/auth-util');
 
 // Generate Ed25519 keys (default)
-const { publicKey, privateKey } = createKeys();
+const { publicKey, privateKey } = generateKeyPair();
 
 // Generate RSA keys
-const rsaKeys = createKeys('rsa');
+const rsaKeys = generateKeyPair('rsa');
 ```
 
 ### String Utilities (`stringUtilAuth`)

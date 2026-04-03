@@ -6,6 +6,7 @@ const {
     jwtCreateSignedFromObject,
     jwtVerifySignature,
     jwtGetHeaderPayloadFromJwt,
+    generateKeyPair,
     passwordCreateHashWithRandomSalt,
     passwordCreateHashBasedOnSavedAlgorithmSalt
 } = require( '../index' );
@@ -65,6 +66,14 @@ describe( 'Index/JwtUtilAuth', function () {
         assert.deepStrictEqual( header, expectedHeader );
         assert.strictEqual( payload.sub, expectedPayload.sub );
         assert.ok( Math.abs( payload.iat - expectedPayload.iat ) < 2 );
+    } );
+
+    it( 'generateKeyPair returns a KeyPair', function () {
+        const keys = generateKeyPair( 'ed25519' );
+        assert.ok( keys.publicKey );
+        assert.ok( keys.privateKey );
+        assert.ok( keys.publicKey.includes( 'BEGIN PUBLIC KEY' ) );
+        assert.ok( keys.privateKey.includes( 'BEGIN PRIVATE KEY' ) );
     } );
 } );
 

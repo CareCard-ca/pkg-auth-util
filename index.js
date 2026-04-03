@@ -4,7 +4,7 @@ const keyGen = require('./lib/keyGen');
 
 module.exports = {
     // New
-    createKeys: keyGen.generateKeyPair,
+    generateKeyPair: keyGen.generateKeyPair,
     jwtCreateSignedFromObject: jwtUtilAuth.createSignedJwtFromObject,
     jwtVerifySignature: jwtUtilAuth.verifyJwtSignature,
     jwtGetHeaderPayloadFromJwt: jwtUtilAuth.getHeaderPayloadFromJwt,
@@ -13,7 +13,7 @@ module.exports = {
 
     // Deprecated
     /**
-     * @deprecated Use native Buffer methods or other modern alternatives.
+     * @deprecated use direct import of the new functions.
      */
     jwtUtilAuth: {
         createSignedJwtFromObject: jwtUtilAuth.createSignedJwtFromObject,
@@ -21,7 +21,7 @@ module.exports = {
         getHeaderPayloadFromJwt: jwtUtilAuth.getHeaderPayloadFromJwt
     },
     /**
-     * @deprecated Use native Buffer methods or other modern alternatives.
+     * @deprecated use direct import of the new functions.
      */
     pwdUtilAuth: {
         createPasswordHashWithRandomSalt: pwdUtilAuth.createPasswordHashWithRandomSalt,
