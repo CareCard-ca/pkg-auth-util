@@ -3,19 +3,19 @@ const { describe, it } = require( 'mocha' );
 const { 
     jwtUtilAuth, 
     pwdUtilAuth,
-    jwtCreateSignedFromObject,
-    jwtVerifySignature,
-    jwtGetHeaderPayloadFromJwt,
     generateKeyPair,
+    jwtCreateSignedToken,
+    jwtVerifySignedToken,
+    jwtGetHeaderPayload,
     passwordCreateHashWithRandomSalt,
-    passwordCreateHashBasedOnSavedAlgorithmSalt
+    passwordCreateHashFromSavedHash
 } = require( '../index' );
 const keys = require( './keys/keys' );
 
 
 describe( 'Index/JwtUtilAuth', function () {
 
-    it( 'jwtCreateSignedFromObject returns base64 url safe jwt', function () {
+    it( 'jwtCreateSignedToken returns base64 url safe jwt', function () {
         const header = {
             alg: "EdDSA",
             typ: "JWT"
@@ -27,29 +27,29 @@ describe( 'Index/JwtUtilAuth', function () {
             "cpso": "81883",
             "roles": ["ph", "ea"]
         }
-        const createdJwt = jwtCreateSignedFromObject( header, payload, keys.privateKey );
-        const isVerified = jwtVerifySignature( createdJwt, keys.publicKey );
+        const createdJwt = jwtCreateSignedToken( header, payload, keys.privateKey );
+        const isVerified = jwtVerifySignedToken( createdJwt, keys.publicKey );
 
         assert.ok( isVerified );
-        const { header: decodedHeader, payload: decodedPayload } = jwtGetHeaderPayloadFromJwt( createdJwt );
+        const { header: decodedHeader, payload: decodedPayload } = jwtGetHeaderPayload( createdJwt );
         assert.deepStrictEqual( decodedHeader, { alg: 'EdDSA', typ: 'JWT' } );
         assert.strictEqual( decodedPayload.sub, '1234567890' );
     } );
 
-    it( 'jwtVerifySignature returns true or false', function () {
+    it( 'jwtVerifySignedToken returns true or false', function () {
         const header = { alg: "EdDSA", typ: "JWT" };
         const payload = { sub: "1234567890" };
-        const jwt = jwtCreateSignedFromObject( header, payload, keys.privateKey );
+        const jwt = jwtCreateSignedToken( header, payload, keys.privateKey );
 
-        const isVerified = jwtVerifySignature( jwt, keys.publicKey );
+        const isVerified = jwtVerifySignedToken( jwt, keys.publicKey );
 
         assert.deepStrictEqual( isVerified, true );
     } );
 
-    it( 'jwtGetHeaderPayloadFromJwt returns header, payload object', function () {
+    it( 'jwtGetHeaderPayload returns header, payload object', function () {
         const headerObj = { alg: "EdDSA", typ: "JWT" };
         const payloadObj = { sub: "1234567890" };
-        const jwt = jwtCreateSignedFromObject( headerObj, payloadObj, keys.privateKey );
+        const jwt = jwtCreateSignedToken( headerObj, payloadObj, keys.privateKey );
 
         const expectedHeader = {
             alg: "EdDSA",
@@ -61,7 +61,7 @@ describe( 'Index/JwtUtilAuth', function () {
             exp: Math.floor( Date.now() / 1000 ) + 3600
         }
 
-        const { header, payload } = jwtGetHeaderPayloadFromJwt( jwt );
+        const { header, payload } = jwtGetHeaderPayload( jwt );
 
         assert.deepStrictEqual( header, expectedHeader );
         assert.strictEqual( payload.sub, expectedPayload.sub );
@@ -89,12 +89,12 @@ describe( 'Index/PwdUtilAuth', function () {
         assert.deepStrictEqual( hash.length > 40, true );
     } );
 
-    it( 'passwordCreateHashBasedOnSavedAlgorithmSalt called with saved hash', function () {
+    it( 'passwordCreateHashFromSavedHash called with saved hash', function () {
         const savedHash = "$1$c2hhNTEy$SOk/04Wn/ce1YIXHlUIqt5SgsuCCLIFjxpzHloVSxFh/z8JuLFshAaGNCkIRf47QSPCOJpkJ476N2eq1Yg1+yg==$6h29BnpUkqfrmtnY1xUrAGZcpcAl5cUEJ4Qjj+BGXbo=$";
         const password = "mySecretPassword";
         const secret = 'bigSecret';
 
-        const hash = passwordCreateHashBasedOnSavedAlgorithmSalt( password, savedHash, secret );
+        const hash = passwordCreateHashFromSavedHash( password, savedHash, secret );
 
         assert.deepStrictEqual( hash, savedHash );
     } );

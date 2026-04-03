@@ -241,7 +241,7 @@ export function generateKeyPair(algorithm?: 'ed25519' | 'rsa' | string): KeyPair
  * @param privateKey - PEM formatted private key to sign the token.
  * @returns Signed JWT string or null if an error occurs.
  */
-export function jwtCreateSignedFromObject(headerObject: JwtHeader, payloadObject: JwtPayload, privateKey: string): string | null;
+export function jwtCreateSignedToken(headerObject: JwtHeader, payloadObject: JwtPayload, privateKey: string): string | null;
 
 /**
  * Verifies the signature of a JWT using a public key.
@@ -249,7 +249,7 @@ export function jwtCreateSignedFromObject(headerObject: JwtHeader, payloadObject
  * @param publicKey - PEM formatted public key.
  * @returns True if the signature is valid, false otherwise.
  */
-export function jwtVerifySignature(jwt: string, publicKey: string): boolean;
+export function jwtVerifySignedToken(jwt: string, publicKey: string): boolean;
 
 /**
  * Decodes a JWT and returns its header and payload as objects.
@@ -257,7 +257,7 @@ export function jwtVerifySignature(jwt: string, publicKey: string): boolean;
  * @param jwt - The JWT string to parse.
  * @returns An object containing the header and payload, or null if parsing fails.
  */
-export function jwtGetHeaderPayloadFromJwt(jwt: string): JwtParts | null;
+export function jwtGetHeaderPayload(jwt: string): JwtParts | null;
 
 /**
  * Generates a password hash using a random salt and specified algorithm.
@@ -276,4 +276,4 @@ export function passwordCreateHashWithRandomSalt(password: string, secret: strin
  * @param secret - The pepper/secret key used for hashing.
  * @returns A hash string that should match the saved hash if the password is correct, or null if an error occurs.
  */
-export function passwordCreateHashBasedOnSavedAlgorithmSalt(password: string, savedPasswordHash: string, secret: string): string | null;
+export function passwordCreateHashFromSavedHash(password: string, savedPasswordHash: string, secret: string): string | null;

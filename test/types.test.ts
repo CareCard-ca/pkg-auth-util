@@ -3,13 +3,13 @@ import {describe, it} from 'mocha';
 import {
     jwtUtilAuth,
     pwdUtilAuth,
-    generateKeyPair,
     stringUtilAuth,
-    jwtCreateSignedFromObject,
-    jwtVerifySignature,
-    jwtGetHeaderPayloadFromJwt,
+    generateKeyPair,
+    jwtCreateSignedToken,
+    jwtVerifySignedToken,
+    jwtGetHeaderPayload,
     passwordCreateHashWithRandomSalt,
-    passwordCreateHashBasedOnSavedAlgorithmSalt,
+    passwordCreateHashFromSavedHash,
     JwtHeader,
     JwtPayload,
     KeyPair,
@@ -44,9 +44,9 @@ describe('TypeScript Type Definitions', () => {
         }
 
         // Test top-level functions directly
-        const jwtDirect: string | null = jwtCreateSignedFromObject(header, payload, privateKey);
-        const isValidDirect: boolean = jwtVerifySignature(jwtDirect || '', publicKey);
-        const partsDirect: JwtParts | null = jwtGetHeaderPayloadFromJwt(jwtDirect || '');
+        const jwtDirect: string | null = jwtCreateSignedToken(header, payload, privateKey);
+        const isValidDirect: boolean = jwtVerifySignedToken(jwtDirect || '', publicKey);
+        const partsDirect: JwtParts | null = jwtGetHeaderPayload(jwtDirect || '');
         assert.strictEqual(typeof isValidDirect, 'boolean');
         assert.ok(!partsDirect || partsDirect.header);
     });
@@ -63,7 +63,7 @@ describe('TypeScript Type Definitions', () => {
 
         // Test top-level functions directly
         const hashWithSaltDirect: string | null = passwordCreateHashWithRandomSalt(password, secret, algorithm);
-        const hashBasedOnSavedDirect: string | null = passwordCreateHashBasedOnSavedAlgorithmSalt(password, hashWithSaltDirect || '', secret);
+        const hashBasedOnSavedDirect: string | null = passwordCreateHashFromSavedHash(password, hashWithSaltDirect || '', secret);
         assert.ok(hashWithSaltDirect === null || true);
         assert.ok(hashBasedOnSavedDirect === null || true);
     });
