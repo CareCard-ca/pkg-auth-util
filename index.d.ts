@@ -105,6 +105,7 @@ export interface KeyPair {
 
 /**
  * Utility functions for creating, verifying, and parsing JSON Web Tokens (JWT).
+ * @deprecated use direct import of the new functions.
  */
 export const jwtUtilAuth: {
     /**
@@ -134,6 +135,7 @@ export const jwtUtilAuth: {
 
 /**
  * Utility functions for password hashing and verification.
+ * @deprecated use direct imports of the new functions.
  */
 export const pwdUtilAuth: {
     /**
