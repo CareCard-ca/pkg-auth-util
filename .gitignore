@@ -1,5 +1,3 @@
-node_modules
-.idea
-.DS_Store
-dist
-coverage
+.idea/
+/node_modules/
+/.nyc_output/

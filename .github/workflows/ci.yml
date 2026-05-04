@@ -1,51 +1,26 @@
-name: CI - Test pkg-validate
+name: CI
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
-      - develop
-      - development
-      - feature/**
-      - releases/**
-      - release*
-      - hotfix/**
-      - iss/**
-      - fix/**
-    paths-ignore:
-      - '**.md'
+    branches: [ main, master ]
   pull_request:
-    types: [ opened, synchronize, reopened, ready_for_review ]
-    branches:
-      - main
-      - develop
-      - development
-      - feature/**
-      - releases/**
-      - release*
-      - hotfix/**
-      - iss/**
-      - fix/**
-    paths-ignore:
-      - '**.md'
+    branches: [ main, master ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 25.0
-          cache: 'npm'
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+    - name: Install dependencies
+      run: npm ci
 
-      - name: Run tests
-        run: npm run test
+    - name: Run tests and coverage
+      run: npm run test:coverage

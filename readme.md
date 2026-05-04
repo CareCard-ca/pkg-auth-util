@@ -1,51 +1,108 @@
-# Auth utilities class
+# @carecard/auth-util
 
-## Main Functionality
+![Tests Passing](https://github.com/CareCard-ca/pkg-auth-util/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/Coverage-97%25-green)
 
-This is a collection of utility functions for use in authentication
+Utility package for authentication and authorization in the CareCard ecosystem.
 
-### Main functions
+## Features
 
-```js
-const { jwtUtilAuth, pwdUtilAuth } = require( '@chatpta/auth-util' );
+- **JWT Utilities**: Create, verify, and parse JSON Web Tokens with support for EdDSA (Ed25519) and RSA.
+- **Password Utilities**: Secure password hashing using HMAC with random salt and a custom string format for easy storage.
+- **Key Generation**: Generate Ed25519 and RSA key pairs for JWT signing.
+- **Crypto Utilities**: Low-level cryptographic primitives for signing, verification, and hashing.
+- **String Utilities**: Base64 and Base64UrlSafe encoding/decoding, and custom string parsing.
+
+## Installation
+
+```bash
+npm install @carecard/auth-util
 ```
 
-Create jwt
+## Usage
 
-```js
-const headerObject = {
-    alg: "SHA256", // Mendatory acceptable algorithm
-    ...
-};
+### JWT Utilities (`jwtUtilAuth`)
 
-const payloadObject = {
-    ...
-};
+```javascript
+const { jwtUtilAuth } = require('@carecard/auth-util');
 
-const jwt = jwtUtilAuth.createSignedJwtFromObject( headerObject, payloadObject, privateKey );
+const header = { alg: 'EdDSA', typ: 'JWT' };
+const payload = { sub: '1234567890', name: 'John Doe' };
+const privateKey = '...'; // Your private PEM key
+
+// Create a signed JWT
+const token = jwtUtilAuth.createSignedJwtFromObject(header, payload, privateKey);
+
+// Verify a JWT signature
+const publicKey = '...'; // Your public PEM key
+const isValid = jwtUtilAuth.verifyJwtSignature(token, publicKey);
+
+// Get header and payload from a JWT
+const { header: decodedHeader, payload: decodedPayload } = jwtUtilAuth.getHeaderPayloadFromJwt(token);
 ```
 
-Verify jwt signature returns ```true``` or ```false```
+### Password Utilities (`pwdUtilAuth`)
 
-```js
-const isVerified = jwtUtilAuth.verifyJwtSignature( jwt, publicKey );
+```javascript
+const { pwdUtilAuth } = require('@carecard/auth-util');
+
+const password = 'mySecretPassword';
+const secret = 'application-wide-secret';
+const algorithm = 'sha512';
+
+// Create a new password hash with a random salt
+const hash = pwdUtilAuth.createPasswordHashWithRandomSalt(password, secret, algorithm);
+// Resulting format: $1$base64(algorithm)$base64(hash)$base64(salt)$
+
+// Verify a password against a saved hash
+const isCorrect = (pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(password, hash, secret) === hash);
 ```
 
-Get header and payload object from jwt.
+### Key Generation
 
-```js
-const { header, payload } = jwtUtilAuth.getHeaderPayloadFromJwt( jwt );
+```javascript
+const { generateKeyPair } = require('@carecard/auth-util');
+
+// Generate Ed25519 keys (default)
+const { publicKey, privateKey } = generateKeyPair();
+
+// Generate RSA keys
+const rsaKeys = generateKeyPair('rsa');
 ```
 
-Create password hash to save in database
+### String Utilities (`stringUtilAuth`)
 
-```js
-const hash = pwdUtilAuth.createPasswordHashWithRandomSalt( password, secret, algorithm );
+```javascript
+const { stringUtilAuth } = require('@carecard/auth-util');
+
+const base64 = stringUtilAuth.asciiToBase64('Hello World');
+const original = stringUtilAuth.base64ToAscii(base64);
+
+const urlSafe = stringUtilAuth.makeStringUrlSafe('a+b/c==');
+// Result: a-b_c
 ```
 
-Create another password hash based on saved hash to compare.
+## Testing
 
-```js
-const hashForLogin = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt( passwordForLogin, savedPasswordHash, secret );
+Run tests using:
+
+```bash
+npm test
 ```
 
+To run type tests:
+
+```bash
+npm run test:types
+```
+
+## Architecture
+
+The package is organized into several modules:
+- `jwtUtilAuth`: Manages the JWT lifecycle.
+- `pwdUtilAuth`: Handles password hashing and verification.
+- `keyGen`: Utility for generating cryptographic keys.
+- `cryptoUtilAuth`: Core cryptographic operations using Node.js `crypto` module.
+- `stringUtilAuth`: String manipulation and format conversions.
+
+All modules are exported through the main `index.js`.
