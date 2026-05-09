@@ -55,7 +55,7 @@ const hash = pwdUtilAuth.createPasswordHashWithRandomSalt(password, secret, algo
 // Resulting format: $1$base64(algorithm)$base64(hash)$base64(salt)$
 
 // Verify a password against a saved hash
-const isCorrect = (pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(password, hash, secret) === hash);
+const isCorrect = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(password, hash, secret) === hash;
 ```
 
 ### Key Generation
@@ -99,6 +99,7 @@ npm run test:types
 ## Architecture
 
 The package is organized into several modules:
+
 - `jwtUtilAuth`: Manages the JWT lifecycle.
 - `pwdUtilAuth`: Handles password hashing and verification.
 - `keyGen`: Utility for generating cryptographic keys.
