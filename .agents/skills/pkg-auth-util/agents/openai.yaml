@@ -1,0 +1,4 @@
+interface:
+  display_name: "Package Auth Util"
+  short_description: "CareCard auth utility workflow"
+  default_prompt: "Use $pkg-auth-util when changing @carecard/auth-util."
