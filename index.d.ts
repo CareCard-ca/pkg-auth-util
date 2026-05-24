@@ -2,7 +2,7 @@
  * Utility functions for authentication and authorization in the CareCard ecosystem.
  */
 
-import {Request} from 'express';
+import { Request } from 'express';
 
 /**
  * Represents the standard JWT header structure.
