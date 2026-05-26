@@ -1,9 +1,52 @@
 ---
-name: pkg-auth-util
-description: Use when changing pkg-auth-util, the @carecard/auth-util CommonJS authentication utility package. Covers JWT creation, verification, decomposition, password hashing and saved-hash verification, crypto primitives, Ed25519/RSA key generation, base64/JWT/password string parsing, public exports, TypeScript declarations, Mocha tests, type tests, and security-sensitive auth behavior.
+name: pkg-auth-util-auth-crypto-library
+description: Use when changing pkg-auth-util auth, password, JWT, crypto, key, exported API, types, or package validation behavior.
 ---
 
 # Package Auth Util
+
+## Purpose
+
+CareCard auth utility package for JWT creation/verification primitives, password hashing, crypto helpers, key generation, and tests.
+
+## When To Use
+
+- Use when changing pkg-auth-util auth, password, JWT, crypto, key, exported API, types, or package validation behavior.
+- Pair with `carecard-workspace-standards` when the task affects shared CareCard conventions or cross-repository contracts.
+
+## When Not To Use
+
+- Do not use for service-local behavior that should remain inside one API or app.
+- Do not change package public APIs without updating consumers and compatibility tests.
+
+## Relevant Files And Directories
+
+- package entry files
+- `src` when present
+- `test`
+- `package.json`
+- `package-lock.json`
+- `.husky`
+
+## Coding Principles
+
+- Preserve the repository structure, naming style, module system, and local helper patterns.
+- Prefer readable, maintainable code with meaningful function, variable, file, and test names.
+- Avoid new dependencies unless the existing stack cannot reasonably solve the task and the user confirms the tradeoff.
+- Keep public exports stable and update CommonJS, ESM, TypeScript declaration, and compatibility surfaces together when present.
+
+## Testing Expectations
+
+- Write or update package tests before behavior or public API changes.
+- Include type/export compatibility tests where the package already has them.
+- Run package test, lint, type, and Husky validation commands required by the changed area.
+
+## Safety Constraints
+
+- Do not edit generated output, dependency folders, logs, coverage, dist, or build artifacts unless the task explicitly requires it.
+- Do not revert or overwrite user changes; stage only files related to the requested skill or instruction update.
+- Never suppress errors, lint failures, type failures, security failures, or failing tests; fix the underlying issue or report the blocker.
+- Do not log or expose secrets, JWTs, passwords, credentials, private keys, sensitive personal data, SQL internals, or stack traces.
 
 ## Overview
 
