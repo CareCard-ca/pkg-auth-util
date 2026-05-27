@@ -2,6 +2,8 @@ import assert from 'assert';
 import { describe, it } from 'mocha';
 import {
   generateKeyPair,
+  jwtCreateServiceAuthorizationHeader,
+  jwtCreateServiceToken,
   jwtCreateSignedToken,
   jwtGetHeaderPayload,
   JwtHeader,
@@ -14,6 +16,7 @@ import {
   passwordCreateHashWithRandomSalt,
   PasswordParts,
   pwdUtilAuth,
+  ServiceJwtOptions,
   stringUtilAuth,
 } from '../index';
 
@@ -32,6 +35,14 @@ describe('TypeScript Type Definitions', () => {
     const publicKey = 'some-public-key';
 
     const jwt: string | null = jwtUtilAuth.createSignedJwtFromObject(header, payload, privateKey);
+    const serviceJwtOptions: ServiceJwtOptions = {
+      issuer: 'ms-institutions',
+      audience: 'ms-auth',
+      privateKey,
+      claims: {
+        route: '/api/v1/ms-auth/users/by-ids',
+      },
+    };
     const isValid: boolean = jwtUtilAuth.verifyJwtSignature(jwt || '', publicKey);
     const parts: JwtParts | null = jwtUtilAuth.getHeaderPayloadFromJwt(jwt || '');
 
@@ -45,10 +56,14 @@ describe('TypeScript Type Definitions', () => {
 
     // Test top-level functions directly
     const jwtDirect: string | null = jwtCreateSignedToken(header, payload, privateKey);
+    const serviceJwtDirect: string | null = jwtCreateServiceToken(serviceJwtOptions);
+    const serviceAuthorizationHeaderDirect: string | null = jwtCreateServiceAuthorizationHeader(serviceJwtOptions);
     const isValidDirect: boolean = jwtVerifySignedToken(jwtDirect || '', publicKey);
     const partsDirect: JwtParts | null = jwtGetHeaderPayload(jwtDirect || '');
     assert.strictEqual(typeof isValidDirect, 'boolean');
     assert.ok(!partsDirect || partsDirect.header);
+    assert.ok(serviceJwtDirect === null || typeof serviceJwtDirect === 'string');
+    assert.ok(serviceAuthorizationHeaderDirect === null || serviceAuthorizationHeaderDirect.startsWith('Bearer '));
   });
 
   it('should verify pwdUtilAuth types', () => {

@@ -24,21 +24,39 @@ npm install @carecard/auth-util
 ### JWT Utilities (`jwtUtilAuth`)
 
 ```javascript
-const { jwtUtilAuth } = require('@carecard/auth-util');
+const { jwtCreateSignedToken, jwtGetHeaderPayload, jwtVerifySignedToken } = require('@carecard/auth-util');
 
 const header = { alg: 'EdDSA', typ: 'JWT' };
 const payload = { sub: '1234567890', name: 'John Doe' };
 const privateKey = '...'; // Your private PEM key
 
 // Create a signed JWT
-const token = jwtUtilAuth.createSignedJwtFromObject(header, payload, privateKey);
+const token = jwtCreateSignedToken(header, payload, privateKey);
 
 // Verify a JWT signature
 const publicKey = '...'; // Your public PEM key
-const isValid = jwtUtilAuth.verifyJwtSignature(token, publicKey);
+const isValid = jwtVerifySignedToken(token, publicKey);
 
 // Get header and payload from a JWT
-const { header: decodedHeader, payload: decodedPayload } = jwtUtilAuth.getHeaderPayloadFromJwt(token);
+const { header: decodedHeader, payload: decodedPayload } = jwtGetHeaderPayload(token);
+```
+
+### Service-To-Service JWT Creation
+
+```javascript
+const { jwtCreateServiceAuthorizationHeader, jwtCreateServiceToken } = require('@carecard/auth-util');
+
+const token = jwtCreateServiceToken({
+  issuer: 'ms-institutions',
+  audience: 'ms-auth',
+  privateKey: institutionsPrivateKey,
+});
+
+const authorization = jwtCreateServiceAuthorizationHeader({
+  issuer: 'ms-institutions',
+  audience: 'ms-auth',
+  privateKey: institutionsPrivateKey,
+});
 ```
 
 ### Password Utilities (`pwdUtilAuth`)

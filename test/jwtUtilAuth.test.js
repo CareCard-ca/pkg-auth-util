@@ -54,6 +54,124 @@ describe('JwtUtilAuth test', function () {
     });
   });
 
+  describe('createServiceJwt', function () {
+    it('should return a signed service JWT with standard service identity claims', function () {
+      const jwt = jwtUtilAuthFromFile.createServiceJwt({
+        issuer: 'ms-institutions',
+        audience: 'ms-auth',
+        privateKey: keys.privateKey,
+        expiresInSeconds: 120,
+      });
+
+      assert.ok(jwt);
+      assert.strictEqual(jwtUtilAuthFromFile.verifyJwtSignature(jwt, keys.publicKey), true);
+
+      const { header, payload } = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      assert.strictEqual(header.alg, 'EdDSA');
+      assert.strictEqual(payload.iss, 'ms-institutions');
+      assert.strictEqual(payload.aud, 'ms-auth');
+      assert.strictEqual(payload.sub, 'ms-institutions');
+      assert.strictEqual(payload.exp - payload.iat, 120);
+    });
+
+    it('should allow array audiences and additional claims without overriding registered service claims', function () {
+      const jwt = jwtUtilAuthFromFile.createServiceJwt({
+        issuer: 'ms-institutions',
+        audience: ['ms-auth', 'ms-user-profiles'],
+        privateKey: keys.privateKey,
+        claims: {
+          aud: 'unexpected-audience',
+          route: '/api/v1/ms-auth/users/by-ids',
+        },
+      });
+
+      const { payload } = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      assert.deepStrictEqual(payload.aud, ['ms-auth', 'ms-user-profiles']);
+      assert.strictEqual(payload.route, '/api/v1/ms-auth/users/by-ids');
+    });
+
+    it('should normalize millisecond issued-at values', function () {
+      const jwt = jwtUtilAuthFromFile.createServiceJwt({
+        issuer: 'ms-institutions',
+        audience: 'ms-auth',
+        privateKey: keys.privateKey,
+        issuedAt: 1516239022000,
+        expiresInSeconds: 60,
+      });
+
+      const { payload } = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      assert.strictEqual(payload.iat, 1516239022);
+      assert.strictEqual(payload.exp, 1516239082);
+    });
+
+    it('should return null when service JWT inputs are incomplete', function () {
+      assert.strictEqual(
+        jwtUtilAuthFromFile.createServiceJwt({
+          issuer: 'ms-institutions',
+          audience: 'ms-auth',
+          privateKey: '',
+        }),
+        null,
+      );
+      assert.strictEqual(
+        jwtUtilAuthFromFile.createServiceJwt({
+          issuer: '',
+          audience: 'ms-auth',
+          privateKey: keys.privateKey,
+        }),
+        null,
+      );
+      assert.strictEqual(
+        jwtUtilAuthFromFile.createServiceJwt({
+          issuer: 'ms-institutions',
+          audience: [],
+          privateKey: keys.privateKey,
+        }),
+        null,
+      );
+      assert.strictEqual(
+        jwtUtilAuthFromFile.createServiceJwt({
+          issuer: 'ms-institutions',
+          audience: 'ms-auth',
+          privateKey: keys.privateKey,
+          subject: '',
+        }),
+        null,
+      );
+      assert.strictEqual(
+        jwtUtilAuthFromFile.createServiceJwt({
+          issuer: 'ms-institutions',
+          audience: 'ms-auth',
+          privateKey: keys.privateKey,
+          expiresInSeconds: 0,
+        }),
+        null,
+      );
+    });
+  });
+
+  describe('createServiceAuthorizationHeader', function () {
+    it('should return a bearer Authorization header for service requests', function () {
+      const authorizationHeader = jwtUtilAuthFromFile.createServiceAuthorizationHeader({
+        issuer: 'ms-institutions',
+        audience: 'ms-auth',
+        privateKey: keys.privateKey,
+      });
+
+      assert.match(authorizationHeader, /^Bearer [^.]+\.[^.]+\.[^.]+$/);
+    });
+
+    it('should return null when a service JWT cannot be created', function () {
+      const authorizationHeader = jwtUtilAuthFromFile.createServiceAuthorizationHeader({
+        issuer: 'ms-institutions',
+        audience: 'ms-auth',
+        privateKey: '',
+      });
+
+      assert.strictEqual(authorizationHeader, null);
+    });
+  });
+
   describe('verifyJwtSignature', function () {
     it('should return true for valid signature', function () {
       const header = { alg: 'EdDSA' };
