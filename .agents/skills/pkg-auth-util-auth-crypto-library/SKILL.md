@@ -83,7 +83,8 @@ depend on those folders being present.
 
 - `index.js` is the centralized public export surface.
 - `index.d.ts` must stay aligned with every public export in `index.js`.
-- `lib/jwtUtilAuth.js` owns JWT creation, verification, and decomposition.
+- `lib/jwtUtilAuth.js` owns JWT creation, service-to-service JWT creation,
+  verification, and decomposition.
 - `lib/pwdUtilAuth.js` owns password hashing and saved-hash verification.
 - `lib/cryptoUtilAuth.js` wraps Node.js `crypto` primitives for signing,
   verifying, generating HMACs, and salts.
@@ -101,6 +102,9 @@ depend on those folders being present.
   changes crypto behavior.
 - Preserve standardized headers and payload behavior, including automatic `iat`
   and `exp` population where the existing API does that.
+- Keep service-to-service JWT creation here, not in `@carecard/jwt-read`.
+  Public service-token creation exports are `jwtCreateServiceToken` and
+  `jwtCreateServiceAuthorizationHeader`.
 - Do not silently change token timing behavior, token formats, JWT string
   assembly, signature verification semantics, or decomposition return shapes.
 - Expected parse and verify failures should return `null` or `false` where the

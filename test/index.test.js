@@ -2,6 +2,8 @@ const assert = require('assert').strict;
 const { describe, it } = require('mocha');
 const {
   generateKeyPair,
+  jwtCreateServiceAuthorizationHeader,
+  jwtCreateServiceToken,
   jwtCreateSignedToken,
   jwtVerifySignedToken,
   jwtGetHeaderPayload,
@@ -40,6 +42,32 @@ describe('Index/JwtUtilAuth', function () {
     const isVerified = jwtVerifySignedToken(jwt, keys.publicKey);
 
     assert.deepStrictEqual(isVerified, true);
+  });
+
+  it('jwtCreateServiceToken returns a signed service JWT', function () {
+    const createdJwt = jwtCreateServiceToken({
+      issuer: 'ms-institutions',
+      audience: 'ms-auth',
+      privateKey: keys.privateKey,
+    });
+
+    const isVerified = jwtVerifySignedToken(createdJwt, keys.publicKey);
+    const { payload } = jwtGetHeaderPayload(createdJwt);
+
+    assert.strictEqual(isVerified, true);
+    assert.strictEqual(payload.iss, 'ms-institutions');
+    assert.strictEqual(payload.sub, 'ms-institutions');
+    assert.strictEqual(payload.aud, 'ms-auth');
+  });
+
+  it('jwtCreateServiceAuthorizationHeader returns a bearer service JWT header', function () {
+    const authorizationHeader = jwtCreateServiceAuthorizationHeader({
+      issuer: 'ms-institutions',
+      audience: 'ms-auth',
+      privateKey: keys.privateKey,
+    });
+
+    assert.match(authorizationHeader, /^Bearer [^.]+\.[^.]+\.[^.]+$/);
   });
 
   it('jwtGetHeaderPayload returns header, payload object', function () {
