@@ -6,6 +6,8 @@ module.exports = {
   // New
   generateKeyPair: keyGen.generateKeyPair,
   jwtCreateSignedToken: jwtUtilAuth.createSignedJwtFromObject,
+  jwtCreateServiceToken: jwtUtilAuth.createServiceJwt,
+  jwtCreateServiceAuthorizationHeader: jwtUtilAuth.createServiceAuthorizationHeader,
   jwtVerifySignedToken: jwtUtilAuth.verifyJwtSignature,
   jwtGetHeaderPayload: jwtUtilAuth.getHeaderPayloadFromJwt,
   passwordCreateHashWithRandomSalt: pwdUtilAuth.createPasswordHashWithRandomSalt,
