@@ -107,6 +107,9 @@ depend on those folders being present.
   `jwtCreateServiceAuthorizationHeader`.
 - Do not silently change token timing behavior, token formats, JWT string
   assembly, signature verification semantics, or decomposition return shapes.
+- Preserve application JWT payload claims, including the `roles` array.
+  `ms-auth` RLS treats `roles: ["ad"]` as the auth-service super-admin signal,
+  so JWT helpers must not hide, rename, or drop that role data.
 - Expected parse and verify failures should return `null` or `false` where the
   current public API does so.
 
