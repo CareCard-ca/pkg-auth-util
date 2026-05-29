@@ -100,6 +100,19 @@ const urlSafe = stringUtilAuth.makeStringUrlSafe('a+b/c==');
 // Result: a-b_c
 ```
 
+## CareCard Auth Contract
+
+`ms-auth` issues CareCard user JWTs and now enforces its own auth tables with
+forced PostgreSQL RLS. This package should preserve JWT claim values exactly
+when creating or verifying tokens; a payload containing `roles: ["ad"]` is the
+auth-service super-admin signal. Do not add helpers that hide, rename, or drop
+the `roles` array, and do not add database bypass behavior to this package.
+
+Docs that mention `ms-auth` controller internals should use concise action
+names such as `loginUser`, `registerUser`, `getUserDetail`, and `renewJwt`.
+Access level is conveyed by route middleware and endpoint placement, not by
+`public`/`protected`/`admin`/`Handler` suffixes.
+
 ## Testing
 
 Run tests using:
