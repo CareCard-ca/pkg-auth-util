@@ -1,6 +1,6 @@
 ---
 name: pkg-auth-util-auth-crypto-library
-description: Use when changing pkg-auth-util auth, password, JWT, crypto, key, exported API, types, or package validation behavior.
+description: 'Use when changing pkg-auth-util auth, password, JWT, crypto, key, exported API, types, or package validation behavior.'
 ---
 
 # Package Auth Util
