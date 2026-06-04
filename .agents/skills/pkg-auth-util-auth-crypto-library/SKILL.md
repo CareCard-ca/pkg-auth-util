@@ -1,6 +1,6 @@
 ---
 name: pkg-auth-util-auth-crypto-library
-description: Use when changing pkg-auth-util auth, password, JWT, crypto, key, exported API, types, or package validation behavior.
+description: 'Use when changing pkg-auth-util auth, password, JWT, crypto, key, exported API, types, or package validation behavior.'
 ---
 
 # Package Auth Util
@@ -43,8 +43,8 @@ CareCard auth utility package for JWT creation/verification primitives, password
 
 ## Safety Constraints
 
-- Do not edit generated output, dependency folders, logs, coverage, dist, or build artifacts unless the task explicitly requires it.
-- Do not revert or overwrite user changes; stage only files related to the requested skill or instruction update.
+- Do not edit generated output, dependency folders, logs, coverage, dist, or build artifacts unless the task requires it.
+- Do not revert or overwrite user changes; stage only requested skill or instruction files.
 - Never suppress errors, lint failures, type failures, security failures, or failing tests; fix the underlying issue or report the blocker.
 - Do not log or expose secrets, JWTs, passwords, credentials, private keys, sensitive personal data, SQL internals, or stack traces.
 
@@ -107,6 +107,9 @@ depend on those folders being present.
   `jwtCreateServiceAuthorizationHeader`.
 - Do not silently change token timing behavior, token formats, JWT string
   assembly, signature verification semantics, or decomposition return shapes.
+- Preserve application JWT payload claims, including the `roles` array.
+  `ms-auth` RLS treats `roles: ["ad"]` as the auth-service super-admin signal,
+  so JWT helpers must not hide, rename, or drop that role data.
 - Expected parse and verify failures should return `null` or `false` where the
   current public API does so.
 
@@ -146,7 +149,7 @@ depend on those folders being present.
 - Use `try/catch` inside utility functions where existing functions fail
   gracefully instead of throwing uncaught exceptions.
 - Do not broaden catch blocks in a way that hides unexpected implementation
-  errors in callers that currently expect throws.
+  errors in callers that expect throws.
 
 ## Types And Exports
 
@@ -199,7 +202,7 @@ and remaining risk.
 
 ## Remote Git Operations Guardrail
 
-Do not run remote Git or GitHub operations unless the current user request explicitly asks for that remote operation. This includes `git fetch`, `git pull`, `git push`, `git push --delete`, remote branch cleanup, GitHub API calls, and any `gh pr` command that creates, updates, readies, merges, closes, or cleans up a pull request. Do not infer permission from branch names, validation needs, prior workflow habits, or convenience; ask first when remote state would be useful but was not requested.
+Do not run remote Git or GitHub operations unless the current user request explicitly asks for them. This includes `git fetch`, `git pull`, `git push`, `git push --delete`, remote branch cleanup, GitHub API calls, and any `gh pr` command that creates, updates, readies, merges, closes, or cleans up a pull request. Do not infer permission from branch names, validation needs, prior workflow habits, or convenience; ask first when remote state would help but was not requested.
 
 ## Agent Guidance Git Workflow
 
