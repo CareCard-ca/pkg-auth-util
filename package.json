@@ -1,6 +1,6 @@
 {
   "name": "@carecard/auth-util",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "repository": "https://github.com/CareCard-ca/pkg-auth-util.git",
   "description": "Auth utility functions",
   "main": "index.js",
@@ -43,6 +43,6 @@
   },
   "dependencies": {
     "@carecard/common-util": "3.2.0",
-    "@carecard/validate": "3.3.0"
+    "@carecard/validate": "3.4.0"
   }
 }
