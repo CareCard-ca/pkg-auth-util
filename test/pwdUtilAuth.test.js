@@ -19,9 +19,8 @@ describe('PwdUtilAuth test', function () {
       assert.notStrictEqual(noMatch, hash);
     });
 
-    it('should return null on error (invalid algorithm)', function () {
-      const result = pwdUtilAuth.createPasswordHashWithRandomSalt('pw', 'sec', 'invalid-alg');
-      assert.strictEqual(result, null);
+    it('should propagate unsupported hashing algorithm errors', function () {
+      assert.throws(() => pwdUtilAuth.createPasswordHashWithRandomSalt('pw', 'sec', 'invalid-alg'), /Invalid digest/);
     });
 
     it('should return null on error (invalid hash format)', function () {
