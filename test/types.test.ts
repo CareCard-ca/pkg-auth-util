@@ -1,5 +1,7 @@
 import assert from 'assert';
+import { readFileSync } from 'fs';
 import { describe, it } from 'mocha';
+import { resolve } from 'path';
 import {
   generateKeyPair,
   jwtCreateServiceAuthorizationHeader,
@@ -21,6 +23,14 @@ import {
 } from '../index';
 
 describe('TypeScript Type Definitions', () => {
+  it('ships the Express types referenced by the public request contract', () => {
+    const packageManifest = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as {
+      dependencies?: Record<string, string>;
+    };
+
+    assert.strictEqual(packageManifest.dependencies?.['@types/express'], '5.0.6');
+  });
+
   it('should verify jwtUtilAuth types and interfaces', () => {
     const header: JwtHeader = { alg: 'EdDSA', typ: 'JWT', custom: 'value' };
     const payload: JwtPayload = {
@@ -31,8 +41,7 @@ describe('TypeScript Type Definitions', () => {
       auth_time: 1234567890,
       custom_claim: 'foo',
     };
-    const privateKey = 'some-private-key';
-    const publicKey = 'some-public-key';
+    const { privateKey, publicKey }: KeyPair = generateKeyPair('ed25519');
 
     const jwt: string | null = jwtUtilAuth.createSignedJwtFromObject(header, payload, privateKey);
     const serviceJwtOptions: ServiceJwtOptions = {
@@ -73,14 +82,14 @@ describe('TypeScript Type Definitions', () => {
     const hashWithSalt: string | null = pwdUtilAuth.createPasswordHashWithRandomSalt(password, secret, algorithm);
     const hashBasedOnSaved: string | null = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(password, hashWithSalt || '', secret);
 
-    assert.ok(hashWithSalt === null || true);
-    assert.ok(hashBasedOnSaved === null || true);
+    assert.ok(hashWithSalt === null || typeof hashWithSalt === 'string');
+    assert.ok(hashBasedOnSaved === null || typeof hashBasedOnSaved === 'string');
 
     // Test top-level functions directly
     const hashWithSaltDirect: string | null = passwordCreateHashWithRandomSalt(password, secret, algorithm);
     const hashBasedOnSavedDirect: string | null = passwordCreateHashFromSavedHash(password, hashWithSaltDirect || '', secret);
-    assert.ok(hashWithSaltDirect === null || true);
-    assert.ok(hashBasedOnSavedDirect === null || true);
+    assert.ok(hashWithSaltDirect === null || typeof hashWithSaltDirect === 'string');
+    assert.ok(hashBasedOnSavedDirect === null || typeof hashBasedOnSavedDirect === 'string');
   });
 
   it('should verify generateKeyPair types and KeyPair interface', () => {

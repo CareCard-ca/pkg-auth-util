@@ -148,14 +148,14 @@ export const jwtUtilAuth: {
    * @param headerObject - Header data for the JWT.
    * @param payloadObject - Payload data for the JWT.
    * @param privateKey - PEM formatted private key to sign the token.
-   * @returns Signed JWT string or null if an error occurs.
+   * @returns Signed JWT string, or null when the private key is missing. Unexpected failures throw.
    */
   createSignedJwtFromObject: (headerObject: JwtHeader, payloadObject: JwtPayload, privateKey: string) => string | null;
   /**
    * Verifies the signature of a JWT using a public key.
    * @param jwt - The JWT string to verify.
    * @param publicKey - PEM formatted public key.
-   * @returns True if the signature is valid, false otherwise.
+   * @returns True if the signature is valid, false for malformed or invalid tokens. Unexpected failures throw.
    */
   verifyJwtSignature: (jwt: string, publicKey: string) => boolean;
   /**
