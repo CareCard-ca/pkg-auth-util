@@ -32,11 +32,10 @@ describe('JwtUtilAuth test', function () {
       assert.ok(decodedPayload.exp > decodedPayload.iat);
     });
 
-    it('should return null when error occurs (circular reference)', function () {
+    it('should propagate unexpected payload serialization errors', function () {
       const circular = {};
       circular.self = circular;
-      const result = jwtUtilAuthFromFile.createSignedJwtFromObject({}, circular, keys.privateKey);
-      assert.strictEqual(result, null);
+      assert.throws(() => jwtUtilAuthFromFile.createSignedJwtFromObject({}, circular, keys.privateKey), TypeError);
     });
 
     it('should return null when privateKey is missing', function () {
@@ -190,6 +189,12 @@ describe('JwtUtilAuth test', function () {
     it('should return false if jwt has invalid number of parts', function () {
       const result = jwtUtilAuthFromFile.verifyJwtSignature('one.two', keys.publicKey);
       assert.strictEqual(result, false);
+    });
+
+    it('should propagate unexpected public-key configuration errors', function () {
+      const jwt = jwtUtilAuthFromFile.createSignedJwtFromObject({ alg: 'EdDSA' }, { sub: '1234567890' }, keys.privateKey);
+
+      assert.throws(() => jwtUtilAuthFromFile.verifyJwtSignature(jwt, 'not-a-public-key'));
     });
   });
 
