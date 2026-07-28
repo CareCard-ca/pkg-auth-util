@@ -111,7 +111,7 @@ describe('TypeScript Type Definitions', () => {
     const b64: string = stringUtilAuth.asciiToBase64('hello');
     const ascii: string = stringUtilAuth.base64ToAscii(b64);
     const objB64: string = stringUtilAuth.objectToBase64UrlSafeString({ a: 1 });
-    const backToObj: any = stringUtilAuth.urlSafeBase64ToObject(objB64);
+    const backToObj: unknown = stringUtilAuth.urlSafeBase64ToObject(objB64);
 
     assert.strictEqual(typeof safeStr, 'string');
     assert.strictEqual(typeof unsafeStr, 'string');
