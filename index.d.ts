@@ -2,7 +2,7 @@
  * Utility functions for authentication and authorization in the CareCard ecosystem.
  */
 
-import { Request } from 'express';
+import type { Request } from 'express';
 
 /**
  * Represents the standard JWT header structure.
@@ -14,7 +14,7 @@ export interface JwtHeader {
   typ?: string;
 
   /** Any other custom header fields. */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -35,7 +35,7 @@ export interface JwtPayload {
   roles?: string[];
 
   /** Any other custom payload fields. */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -89,10 +89,10 @@ export interface JwtRequestObject {
   header: JwtHeader;
   payload: JwtPayload;
   age?: number;
-  jwtClientId: (req?: any) => string | undefined;
+  jwtClientId: (req?: AuthenticatedRequest) => string | undefined;
   doesJwtUserHasRole: (role: string) => boolean;
   isJwtExpired: (jwtValiditySeconds?: number) => boolean;
-  jwtAgeInSeconds: (req?: any) => number;
+  jwtAgeInSeconds: (req?: AuthenticatedRequest) => number;
 }
 
 /**
@@ -101,7 +101,7 @@ export interface JwtRequestObject {
 export interface VisitorRequestObject {
   header: JwtHeader;
   payload: JwtPayload;
-  visitorClientId: (req?: any) => string | undefined;
+  visitorClientId: (req?: AuthenticatedRequest) => string | undefined;
 }
 
 /**
@@ -248,14 +248,14 @@ export const stringUtilAuth: {
    * @param object - The object to serialize.
    * @returns URL-safe base64 string.
    */
-  objectToBase64UrlSafeString: (object: any) => string;
+  objectToBase64UrlSafeString: (object: unknown) => string;
   /**
    * Parses a URL-safe base64 string into an object.
    * @deprecated Use native Buffer methods or other modern alternatives.
    * @param urlSafeBase64String - URL-safe base64 string.
    * @returns The parsed object.
    */
-  urlSafeBase64ToObject: (urlSafeBase64String: string) => any;
+  urlSafeBase64ToObject: (urlSafeBase64String: string) => unknown;
 };
 
 /**
