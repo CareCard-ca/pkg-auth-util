@@ -7,7 +7,9 @@ Non-negotiable root-cause solution rule: Always identify and solve the verified 
 
 # Package Auth Util
 
-Non-negotiable TDD rule: Always write the failing test first, run it to confirm it fails for the intended reason, then implement the code and rerun the test until it passes. Test Driven Development is required for all coding work and must not be skipped. For documentation- or skill-only edits, add or update the relevant validation check before changing the prose.
+Non-negotiable TDD rule: Always write the failing test first, run it to confirm it fails for the intended reason, then implement the code and rerun the test until it passes. Test Driven Development is required for all coding work and must not be skipped. For documentation- or skill-only edits, run the relevant focused non-test
+validation before changing the prose; do not add automated tests that inspect
+prose, files, or repository structure.
 
 Non-negotiable repository isolation rule: Every repository must run its Husky hooks and tests using only files, code, fixtures, dependencies, and services contained within that repository. Tests and Husky scripts must not import, require, read, execute, or otherwise depend on sibling repositories or paths outside the repository root. app-e2e-tests is the only exception because cross-repository end-to-end testing is its explicit responsibility.
 
@@ -49,8 +51,10 @@ CareCard auth utility package for JWT creation/verification primitives, password
 
 ## Testing Expectations
 
-- Write or update package tests before behavior or public API changes.
-- Include type/export compatibility tests where the package already has them.
+- Write a new failing consumer-facing test through the supported package root
+  before behavior or public API changes. Modify a pre-existing test only after
+  the user grants fresh, explicit permission for that exact change.
+- Include consumer-facing runtime and compilation tests through the supported package root. Exercise public behavior and realistic type usage without inspecting export objects, source files, or module layout.
 - Run package test, lint, type, and Husky validation commands required by the changed area.
 
 ## Safety Constraints
@@ -82,8 +86,10 @@ depend on those folders being present.
   - Internal helpers use the established underscore prefix.
 - Keep public exports in `index.js`, declarations in `index.d.ts`,
   implementation modules in `lib`, and tests in `test`.
-- Use Test-Driven Development. Add or update Mocha and type tests before
-  changing behavior or exported API.
+- Use Test-Driven Development. Add a new failing consumer-facing Mocha or type
+  test through the supported package root before changing behavior or exported
+  API. Modify a pre-existing test only after the user grants fresh, explicit
+  permission for that exact change.
 - Never suppress errors, type errors, linter warnings, crypto failures, or
   failing tests. Fix the cause.
 - Do not add dependencies unless absolutely required. Ask for confirmation first
@@ -168,20 +174,20 @@ depend on those folders being present.
 - Keep `index.d.ts` in sync with every public export in `index.js`.
 - Avoid new loose index signatures. If payloads need custom claims, type them as
   `Record<string, unknown>` or a named claim interface.
-- Keep deprecated APIs marked as deprecated and prefer direct export examples in
-  docs and tests.
-- Update type tests whenever public exports, overloads, return values, payload
-  shapes, or declaration behavior changes.
+- Keep deprecated APIs marked as deprecated and prefer direct public-package
+  usage examples in documentation.
+- When public types, overloads, return values, payload shapes, or declaration
+  behavior change, compile realistic consumer usage through the supported
+  package root. Do not assert that a named export or declaration node exists.
 
 ## Tests
 
 - Use Mocha for runtime tests under `test`.
-- Every implementation module in `lib` should have matching tests under `test`.
-  For example, `lib/jwtUtilAuth.js` should be covered by
-  `test/jwtUtilAuth.test.js`.
-- `test/index.test.js` should cover scenarios through the public exports from
-  `index.js`.
-- `test/types.test.ts` verifies TypeScript declarations with `tsc`.
+- Exercise runtime scenarios only through the supported package root. Tests
+  must not mirror `lib` modules, depend on internal file layout, or inspect
+  named exports for existence.
+- Compile realistic consumer code through the package root with `tsc` to
+  verify externally visible declaration behavior.
 - Cover success and failure cases for JWT parsing, signature verification,
   password hashing, saved-hash verification, key generation, base64 conversion,
   URL-safe conversion, and string parsing.
@@ -267,3 +273,22 @@ immediately when no helper remains, allow only a bounded 250 ms settlement
 window for already-stopping helpers, fail persistent descendants, preserve
 failures and output, use exit code `124` only for a real outer deadline, and
 remain a final guard rather than a substitute for explicit cleanup.
+
+## TDD And Validation
+
+Test Driven Development is a non-negotiable requirement.
+
+The sole purpose of automated tests is to verify observable functionality and externally visible behavior.
+Tests must validate what the system does through its public interfaces and expected outcomes.
+
+Tests must not assert, inspect, or depend on implementation details, including but not limited to:
+
+- The existence of specific lines of code, statements, functions, classes, files, or modules.
+- Specific algorithms, control flow, variable names, method calls, code snippets, or internal implementation choices.
+- Any internal structure that can change without changing externally observable behavior.
+
+A correct implementation may be completely rewritten or refactored without requiring changes to functional tests, provided its externally observable behavior remains unchanged.
+
+Any test that fails solely because the implementation changed while the externally observable behavior remained correct is incorrectly designed and must be rewritten or removed.
+
+This requirement is mandatory for all new tests and must be applied whenever existing tests are modified.
