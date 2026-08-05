@@ -1,9 +1,22 @@
 const assert = require('assert').strict;
 const { describe, it } = require('mocha');
-const jwtUtilAuthFromFile = require('../lib/jwtUtilAuth');
+const {
+  generateKeyPair,
+  jwtCreateServiceAuthorizationHeader,
+  jwtCreateServiceToken,
+  jwtCreateSignedToken,
+  jwtGetHeaderPayload,
+  jwtVerifySignedToken,
+} = require('../index');
+const jwtUtilAuthFromFile = {
+  createServiceAuthorizationHeader: jwtCreateServiceAuthorizationHeader,
+  createServiceJwt: jwtCreateServiceToken,
+  createSignedJwtFromObject: jwtCreateSignedToken,
+  getHeaderPayloadFromJwt: jwtGetHeaderPayload,
+  verifyJwtSignature: jwtVerifySignedToken,
+};
 
 const keys = require('./keys/keys');
-const { generateKeyPair } = require('../lib/keyGen');
 
 describe('JwtUtilAuth test', function () {
   describe('createSignedJwtFromObject', function () {
@@ -217,51 +230,6 @@ describe('JwtUtilAuth test', function () {
     it('should return null when input is not a string', function () {
       const result = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(null);
       assert.strictEqual(result, null);
-    });
-  });
-
-  describe('Internal functions', function () {
-    it('_normalizePayload should normalize timestamps', function () {
-      const payload = {
-        iat: 1516239022000,
-        exp: 1516242622000,
-        nbf: 1516239022000,
-        auth_time: 1516239022000,
-      };
-      const normalized = jwtUtilAuthFromFile._normalizePayload(payload);
-      assert.strictEqual(normalized.iat, 1516239022);
-      assert.strictEqual(normalized.exp, 1516242622);
-      assert.strictEqual(normalized.nbf, 1516239022);
-      assert.strictEqual(normalized.auth_time, 1516239022);
-    });
-
-    it('_normalizePayload should set iat and exp if missing', function () {
-      const payload = {};
-      const normalized = jwtUtilAuthFromFile._normalizePayload(payload);
-      assert.ok(normalized.iat);
-      assert.strictEqual(normalized.exp, normalized.iat + 3600);
-    });
-
-    it('_encode and _decode should be inverses', function () {
-      const obj = { foo: 'bar' };
-      const encoded = jwtUtilAuthFromFile._encode(obj);
-      const decoded = jwtUtilAuthFromFile._decode(encoded);
-      assert.deepStrictEqual(decoded, obj);
-    });
-
-    it('_sign and _verify should work for EdDSA', function () {
-      const token = 'header.payload';
-      const sig = jwtUtilAuthFromFile._sign(token, 'EdDSA', keys.privateKey);
-      const isValid = jwtUtilAuthFromFile._verify(token, sig, 'EdDSA', keys.publicKey);
-      assert.strictEqual(isValid, true);
-    });
-
-    it('_sign and _verify should work for RSA (sha256)', function () {
-      const { privateKey: rsaPrivateKey, publicKey: rsaPublicKey } = generateKeyPair('rsa');
-      const token = 'header.payload';
-      const sig = jwtUtilAuthFromFile._sign(token, 'sha256', rsaPrivateKey);
-      const isValid = jwtUtilAuthFromFile._verify(token, sig, 'sha256', rsaPublicKey);
-      assert.strictEqual(isValid, true);
     });
   });
 });

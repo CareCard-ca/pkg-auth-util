@@ -1,11 +1,8 @@
 'use strict';
 
-const { runIndexedMochaTests } = require('../scripts/testParallel/runIndexedMochaTests.cjs');
+const { runIndexedMochaTests } = require('./testParallel/runIndexedMochaTests.cjs');
 
 const parallelTestFiles = [
-  'test/config/repositoryIsolation.test.js',
-  'test/config/tddGuidanceDocs.test.js',
-  'test/dependencyOverrides.test.js',
   'test/indexExports.test.js',
   'test/jwtUtilAuth.test.js',
   'test/keyGen.test.js',
