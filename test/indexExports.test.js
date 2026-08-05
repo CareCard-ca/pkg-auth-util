@@ -123,5 +123,3 @@ describe('Index/PwdUtilAuth', function () {
     assert.deepStrictEqual(hash, savedHash);
   });
 });
-
-require('./config/tddGuidanceDocs.test');

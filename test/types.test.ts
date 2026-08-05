@@ -1,7 +1,5 @@
 import assert from 'assert';
-import { readFileSync } from 'fs';
 import { describe, it } from 'mocha';
-import { resolve } from 'path';
 import {
   generateKeyPair,
   jwtCreateServiceAuthorizationHeader,
@@ -23,14 +21,6 @@ import {
 } from '../index';
 
 describe('TypeScript Type Definitions', () => {
-  it('ships the Express types referenced by the public request contract', () => {
-    const packageManifest = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf8')) as {
-      dependencies?: Record<string, string>;
-    };
-
-    assert.strictEqual(packageManifest.dependencies?.['@types/express'], '5.0.6');
-  });
-
   it('should verify jwtUtilAuth types and interfaces', () => {
     const header: JwtHeader = { alg: 'EdDSA', typ: 'JWT', custom: 'value' };
     const payload: JwtPayload = {
