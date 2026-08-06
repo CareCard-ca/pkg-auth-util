@@ -2,7 +2,7 @@ const assert = require('assert').strict;
 const { describe, it } = require('mocha');
 const crypto = require('crypto');
 
-const { generateKeyPair } = require('../index');
+const { generateKeyPair } = require('../lib/keyGen');
 
 describe('keyGen test', function () {
   describe('generateKeyPair', function () {
