@@ -1,6 +1,6 @@
 const assert = require('assert').strict;
 const { describe, it } = require('mocha');
-const pwdUtilAuth = require('../lib/pwdUtilAuth');
+const { pwdUtilAuth } = require('../index');
 
 describe('PwdUtilAuth test', function () {
   describe('createPasswordHashWithRandomSalt & createPasswordHashBasedOnSavedAlgorithmSalt', function () {

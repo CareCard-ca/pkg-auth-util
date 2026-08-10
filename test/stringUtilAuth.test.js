@@ -1,6 +1,6 @@
 const assert = require('assert').strict;
 const { describe, it } = require('mocha');
-const stringUtilAuth = require('../lib/stringUtilAuth');
+const { stringUtilAuth } = require('../index');
 
 describe('StringUtilAuth test', function () {
   describe('makeStringUrlSafe', function () {
