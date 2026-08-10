@@ -19,4 +19,8 @@ describe('Dependency overrides', function () {
 
     assert.deepStrictEqual([...installedGlobVersions], [SUPPORTED_GLOB_VERSION]);
   });
+
+  it('declares the Express types required by the published request contract', function () {
+    assert.strictEqual(packageJson.dependencies?.['@types/express'], '5.0.6');
+  });
 });
