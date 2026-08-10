@@ -1,9 +1,14 @@
 const assert = require('assert').strict;
 const { describe, it } = require('mocha');
-const jwtUtilAuthFromFile = require('../lib/jwtUtilAuth');
-
 const keys = require('./keys/keys');
-const { generateKeyPair } = require('../lib/keyGen');
+const {
+  generateKeyPair,
+  jwtCreateServiceAuthorizationHeader,
+  jwtCreateServiceToken,
+  jwtCreateSignedToken,
+  jwtGetHeaderPayload,
+  jwtVerifySignedToken,
+} = require('../index');
 
 describe('JwtUtilAuth test', function () {
   describe('createSignedJwtFromObject', function () {
@@ -19,10 +24,10 @@ describe('JwtUtilAuth test', function () {
       };
       const privateKey = keys.privateKey;
 
-      const jwt = jwtUtilAuthFromFile.createSignedJwtFromObject(header, payload, privateKey);
+      const jwt = jwtCreateSignedToken(header, payload, privateKey);
       assert.ok(jwt);
 
-      const { header: decodedHeader, payload: decodedPayload } = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      const { header: decodedHeader, payload: decodedPayload } = jwtGetHeaderPayload(jwt);
       assert.strictEqual(decodedHeader.alg, 'EdDSA');
       assert.strictEqual(decodedPayload.sub, '1234567890');
       assert.strictEqual(decodedPayload.iat, 1516239022); // converted to seconds
@@ -35,11 +40,11 @@ describe('JwtUtilAuth test', function () {
     it('should propagate unexpected payload serialization errors', function () {
       const circular = {};
       circular.self = circular;
-      assert.throws(() => jwtUtilAuthFromFile.createSignedJwtFromObject({}, circular, keys.privateKey), TypeError);
+      assert.throws(() => jwtCreateSignedToken({}, circular, keys.privateKey), TypeError);
     });
 
     it('should return null when privateKey is missing', function () {
-      const result = jwtUtilAuthFromFile.createSignedJwtFromObject({}, {}, null);
+      const result = jwtCreateSignedToken({}, {}, null);
       assert.strictEqual(result, null);
     });
 
@@ -47,15 +52,15 @@ describe('JwtUtilAuth test', function () {
       const { privateKey: rsaPrivateKey, publicKey: rsaPublicKey } = generateKeyPair('rsa');
       const header = { alg: 'sha256' };
       const payload = { sub: '123' };
-      const jwt = jwtUtilAuthFromFile.createSignedJwtFromObject(header, payload, rsaPrivateKey);
+      const jwt = jwtCreateSignedToken(header, payload, rsaPrivateKey);
       assert.ok(jwt);
-      assert.ok(jwtUtilAuthFromFile.verifyJwtSignature(jwt, rsaPublicKey));
+      assert.ok(jwtVerifySignedToken(jwt, rsaPublicKey));
     });
   });
 
   describe('createServiceJwt', function () {
     it('should return a signed service JWT with standard service identity claims', function () {
-      const jwt = jwtUtilAuthFromFile.createServiceJwt({
+      const jwt = jwtCreateServiceToken({
         issuer: 'ms-institutions',
         audience: 'ms-auth',
         privateKey: keys.privateKey,
@@ -63,9 +68,9 @@ describe('JwtUtilAuth test', function () {
       });
 
       assert.ok(jwt);
-      assert.strictEqual(jwtUtilAuthFromFile.verifyJwtSignature(jwt, keys.publicKey), true);
+      assert.strictEqual(jwtVerifySignedToken(jwt, keys.publicKey), true);
 
-      const { header, payload } = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      const { header, payload } = jwtGetHeaderPayload(jwt);
       assert.strictEqual(header.alg, 'EdDSA');
       assert.strictEqual(payload.iss, 'ms-institutions');
       assert.strictEqual(payload.aud, 'ms-auth');
@@ -74,7 +79,7 @@ describe('JwtUtilAuth test', function () {
     });
 
     it('should allow array audiences and additional claims without overriding registered service claims', function () {
-      const jwt = jwtUtilAuthFromFile.createServiceJwt({
+      const jwt = jwtCreateServiceToken({
         issuer: 'ms-institutions',
         audience: ['ms-auth', 'ms-user-profiles'],
         privateKey: keys.privateKey,
@@ -84,13 +89,13 @@ describe('JwtUtilAuth test', function () {
         },
       });
 
-      const { payload } = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      const { payload } = jwtGetHeaderPayload(jwt);
       assert.deepStrictEqual(payload.aud, ['ms-auth', 'ms-user-profiles']);
       assert.strictEqual(payload.route, '/api/v1/ms-auth/users/by-ids');
     });
 
     it('should normalize millisecond issued-at values', function () {
-      const jwt = jwtUtilAuthFromFile.createServiceJwt({
+      const jwt = jwtCreateServiceToken({
         issuer: 'ms-institutions',
         audience: 'ms-auth',
         privateKey: keys.privateKey,
@@ -98,14 +103,14 @@ describe('JwtUtilAuth test', function () {
         expiresInSeconds: 60,
       });
 
-      const { payload } = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      const { payload } = jwtGetHeaderPayload(jwt);
       assert.strictEqual(payload.iat, 1516239022);
       assert.strictEqual(payload.exp, 1516239082);
     });
 
     it('should return null when service JWT inputs are incomplete', function () {
       assert.strictEqual(
-        jwtUtilAuthFromFile.createServiceJwt({
+        jwtCreateServiceToken({
           issuer: 'ms-institutions',
           audience: 'ms-auth',
           privateKey: '',
@@ -113,7 +118,7 @@ describe('JwtUtilAuth test', function () {
         null,
       );
       assert.strictEqual(
-        jwtUtilAuthFromFile.createServiceJwt({
+        jwtCreateServiceToken({
           issuer: '',
           audience: 'ms-auth',
           privateKey: keys.privateKey,
@@ -121,7 +126,7 @@ describe('JwtUtilAuth test', function () {
         null,
       );
       assert.strictEqual(
-        jwtUtilAuthFromFile.createServiceJwt({
+        jwtCreateServiceToken({
           issuer: 'ms-institutions',
           audience: [],
           privateKey: keys.privateKey,
@@ -129,7 +134,7 @@ describe('JwtUtilAuth test', function () {
         null,
       );
       assert.strictEqual(
-        jwtUtilAuthFromFile.createServiceJwt({
+        jwtCreateServiceToken({
           issuer: 'ms-institutions',
           audience: 'ms-auth',
           privateKey: keys.privateKey,
@@ -138,7 +143,7 @@ describe('JwtUtilAuth test', function () {
         null,
       );
       assert.strictEqual(
-        jwtUtilAuthFromFile.createServiceJwt({
+        jwtCreateServiceToken({
           issuer: 'ms-institutions',
           audience: 'ms-auth',
           privateKey: keys.privateKey,
@@ -151,7 +156,7 @@ describe('JwtUtilAuth test', function () {
 
   describe('createServiceAuthorizationHeader', function () {
     it('should return a bearer Authorization header for service requests', function () {
-      const authorizationHeader = jwtUtilAuthFromFile.createServiceAuthorizationHeader({
+      const authorizationHeader = jwtCreateServiceAuthorizationHeader({
         issuer: 'ms-institutions',
         audience: 'ms-auth',
         privateKey: keys.privateKey,
@@ -161,7 +166,7 @@ describe('JwtUtilAuth test', function () {
     });
 
     it('should return null when a service JWT cannot be created', function () {
-      const authorizationHeader = jwtUtilAuthFromFile.createServiceAuthorizationHeader({
+      const authorizationHeader = jwtCreateServiceAuthorizationHeader({
         issuer: 'ms-institutions',
         audience: 'ms-auth',
         privateKey: '',
@@ -175,26 +180,26 @@ describe('JwtUtilAuth test', function () {
     it('should return true for valid signature', function () {
       const header = { alg: 'EdDSA' };
       const payload = { sub: '1234567890' };
-      const jwt = jwtUtilAuthFromFile.createSignedJwtFromObject(header, payload, keys.privateKey);
+      const jwt = jwtCreateSignedToken(header, payload, keys.privateKey);
 
-      const isValid = jwtUtilAuthFromFile.verifyJwtSignature(jwt, keys.publicKey);
+      const isValid = jwtVerifySignedToken(jwt, keys.publicKey);
       assert.strictEqual(isValid, true);
     });
 
     it('should return false when error occurs (invalid header format)', function () {
-      const result = jwtUtilAuthFromFile.verifyJwtSignature('not-base64.payload.sig', keys.publicKey);
+      const result = jwtVerifySignedToken('not-base64.payload.sig', keys.publicKey);
       assert.strictEqual(result, false);
     });
 
     it('should return false if jwt has invalid number of parts', function () {
-      const result = jwtUtilAuthFromFile.verifyJwtSignature('one.two', keys.publicKey);
+      const result = jwtVerifySignedToken('one.two', keys.publicKey);
       assert.strictEqual(result, false);
     });
 
     it('should propagate unexpected public-key configuration errors', function () {
-      const jwt = jwtUtilAuthFromFile.createSignedJwtFromObject({ alg: 'EdDSA' }, { sub: '1234567890' }, keys.privateKey);
+      const jwt = jwtCreateSignedToken({ alg: 'EdDSA' }, { sub: '1234567890' }, keys.privateKey);
 
-      assert.throws(() => jwtUtilAuthFromFile.verifyJwtSignature(jwt, 'not-a-public-key'));
+      assert.throws(() => jwtVerifySignedToken(jwt, 'not-a-public-key'));
     });
   });
 
@@ -202,65 +207,64 @@ describe('JwtUtilAuth test', function () {
     it('should return header and payload for valid JWT', function () {
       const header = { alg: 'EdDSA' };
       const payload = { sub: '1234567890' };
-      const jwt = jwtUtilAuthFromFile.createSignedJwtFromObject(header, payload, keys.privateKey);
+      const jwt = jwtCreateSignedToken(header, payload, keys.privateKey);
 
-      const result = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(jwt);
+      const result = jwtGetHeaderPayload(jwt);
       assert.strictEqual(result.header.alg, 'EdDSA');
       assert.strictEqual(result.payload.sub, '1234567890');
     });
 
     it('should return null when error occurs (invalid JSON in header)', function () {
-      const result = jwtUtilAuthFromFile.getHeaderPayloadFromJwt('bm90LWpzb24.payload.sig'); // 'bm90LWpzb24' is 'not-json'
+      const result = jwtGetHeaderPayload('bm90LWpzb24.payload.sig'); // 'bm90LWpzb24' is 'not-json'
       assert.strictEqual(result, null);
     });
 
     it('should return null when input is not a string', function () {
-      const result = jwtUtilAuthFromFile.getHeaderPayloadFromJwt(null);
+      const result = jwtGetHeaderPayload(null);
       assert.strictEqual(result, null);
     });
   });
 
-  describe('Internal functions', function () {
-    it('_normalizePayload should normalize timestamps', function () {
+  describe('public signing behavior', function () {
+    it('normalizes millisecond timestamps in signed payloads', function () {
       const payload = {
         iat: 1516239022000,
         exp: 1516242622000,
         nbf: 1516239022000,
         auth_time: 1516239022000,
       };
-      const normalized = jwtUtilAuthFromFile._normalizePayload(payload);
+      const jwt = jwtCreateSignedToken({ alg: 'EdDSA' }, payload, keys.privateKey);
+      const { payload: normalized } = jwtGetHeaderPayload(jwt);
       assert.strictEqual(normalized.iat, 1516239022);
       assert.strictEqual(normalized.exp, 1516242622);
       assert.strictEqual(normalized.nbf, 1516239022);
       assert.strictEqual(normalized.auth_time, 1516239022);
     });
 
-    it('_normalizePayload should set iat and exp if missing', function () {
-      const payload = {};
-      const normalized = jwtUtilAuthFromFile._normalizePayload(payload);
+    it('adds default issue and expiry timestamps when they are omitted', function () {
+      const jwt = jwtCreateSignedToken({ alg: 'EdDSA' }, {}, keys.privateKey);
+      const { payload: normalized } = jwtGetHeaderPayload(jwt);
       assert.ok(normalized.iat);
       assert.strictEqual(normalized.exp, normalized.iat + 3600);
     });
 
-    it('_encode and _decode should be inverses', function () {
-      const obj = { foo: 'bar' };
-      const encoded = jwtUtilAuthFromFile._encode(obj);
-      const decoded = jwtUtilAuthFromFile._decode(encoded);
-      assert.deepStrictEqual(decoded, obj);
+    it('preserves custom payload values through token creation and decoding', function () {
+      const payload = { foo: 'bar' };
+      const jwt = jwtCreateSignedToken({ alg: 'EdDSA' }, payload, keys.privateKey);
+      const { payload: decodedPayload } = jwtGetHeaderPayload(jwt);
+      assert.strictEqual(decodedPayload.foo, payload.foo);
     });
 
-    it('_sign and _verify should work for EdDSA', function () {
-      const token = 'header.payload';
-      const sig = jwtUtilAuthFromFile._sign(token, 'EdDSA', keys.privateKey);
-      const isValid = jwtUtilAuthFromFile._verify(token, sig, 'EdDSA', keys.publicKey);
+    it('creates EdDSA tokens accepted by public signature verification', function () {
+      const jwt = jwtCreateSignedToken({ alg: 'EdDSA' }, { sub: 'ed25519-user' }, keys.privateKey);
+      const isValid = jwtVerifySignedToken(jwt, keys.publicKey);
       assert.strictEqual(isValid, true);
     });
 
-    it('_sign and _verify should work for RSA (sha256)', function () {
+    it('creates RSA tokens accepted by public signature verification', function () {
       const { privateKey: rsaPrivateKey, publicKey: rsaPublicKey } = generateKeyPair('rsa');
-      const token = 'header.payload';
-      const sig = jwtUtilAuthFromFile._sign(token, 'sha256', rsaPrivateKey);
-      const isValid = jwtUtilAuthFromFile._verify(token, sig, 'sha256', rsaPublicKey);
+      const jwt = jwtCreateSignedToken({ alg: 'sha256' }, { sub: 'rsa-user' }, rsaPrivateKey);
+      const isValid = jwtVerifySignedToken(jwt, rsaPublicKey);
       assert.strictEqual(isValid, true);
     });
   });
