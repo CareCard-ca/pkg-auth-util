@@ -27,7 +27,8 @@ module.exports = {
    */
   pwdUtilAuth: {
     createPasswordHashWithRandomSalt: pwdUtilAuth.createPasswordHashWithRandomSalt,
-    createPasswordHashBasedOnSavedAlgorithmSalt: pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt,
+    createPasswordHashBasedOnSavedAlgorithmSalt:
+      pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt,
   },
   /**
    * @deprecated Use native Buffer methods or other modern alternatives.
