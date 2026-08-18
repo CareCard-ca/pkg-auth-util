@@ -12,15 +12,26 @@ describe('PwdUtilAuth test', function () {
       const hash = pwdUtilAuth.createPasswordHashWithRandomSalt(password, secret, algorithm);
       assert.ok(hash);
 
-      const isMatch = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(password, hash, secret);
+      const isMatch = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
+        password,
+        hash,
+        secret,
+      );
       assert.strictEqual(isMatch, hash);
 
-      const noMatch = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt('wrongPassword', hash, secret);
+      const noMatch = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
+        'wrongPassword',
+        hash,
+        secret,
+      );
       assert.notStrictEqual(noMatch, hash);
     });
 
     it('should propagate unsupported hashing algorithm errors', function () {
-      assert.throws(() => pwdUtilAuth.createPasswordHashWithRandomSalt('pw', 'sec', 'invalid-alg'), /Invalid digest/);
+      assert.throws(
+        () => pwdUtilAuth.createPasswordHashWithRandomSalt('pw', 'sec', 'invalid-alg'),
+        /Invalid digest/,
+      );
     });
 
     it('should return null on error (invalid hash format)', function () {
@@ -29,7 +40,11 @@ describe('PwdUtilAuth test', function () {
     });
 
     it('should return null on invalid saved hash structure', function () {
-      const result = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt('pw', 'not$enough$parts', 'sec');
+      const result = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
+        'pw',
+        'not$enough$parts',
+        'sec',
+      );
       assert.strictEqual(result, null);
     });
   });

@@ -122,7 +122,10 @@ describe('StringUtilAuth test', function () {
     it('should handle non-string or invalid input', function () {
       assert.strictEqual(stringUtilAuth.dotConnectedStringToHeaderPayloadSignature(null), null);
       assert.strictEqual(stringUtilAuth.dotConnectedStringToHeaderPayloadSignature(123), null);
-      assert.strictEqual(stringUtilAuth.dotConnectedStringToHeaderPayloadSignature('one.two'), null);
+      assert.strictEqual(
+        stringUtilAuth.dotConnectedStringToHeaderPayloadSignature('one.two'),
+        null,
+      );
     });
   });
 
