@@ -150,7 +150,11 @@ export const jwtUtilAuth: {
    * @param privateKey - PEM formatted private key to sign the token.
    * @returns Signed JWT string, or null when the private key is missing. Unexpected failures throw.
    */
-  createSignedJwtFromObject: (headerObject: JwtHeader, payloadObject: JwtPayload, privateKey: string) => string | null;
+  createSignedJwtFromObject: (
+    headerObject: JwtHeader,
+    payloadObject: JwtPayload,
+    privateKey: string,
+  ) => string | null;
   /**
    * Verifies the signature of a JWT using a public key.
    * @param jwt - The JWT string to verify.
@@ -179,7 +183,11 @@ export const pwdUtilAuth: {
    * @param algorithm - The hashing algorithm to use (e.g., 'sha256').
    * @returns A string containing the formatted hash with metadata ($1$alg$hash$salt$) or null if an error occurs.
    */
-  createPasswordHashWithRandomSalt: (password: string, secret: string, algorithm: string) => string | null;
+  createPasswordHashWithRandomSalt: (
+    password: string,
+    secret: string,
+    algorithm: string,
+  ) => string | null;
   /**
    * Generates a password hash using the same algorithm and salt from a previously saved hash.
    * Useful for verifying a password against a stored hash.
@@ -188,7 +196,11 @@ export const pwdUtilAuth: {
    * @param secret - The pepper/secret key used for hashing.
    * @returns A hash string that should match the saved hash if the password is correct, or null if an error occurs.
    */
-  createPasswordHashBasedOnSavedAlgorithmSalt: (password: string, savedPasswordHash: string, secret: string) => string | null;
+  createPasswordHashBasedOnSavedAlgorithmSalt: (
+    password: string,
+    savedPasswordHash: string,
+    secret: string,
+  ) => string | null;
 };
 
 /**
@@ -273,7 +285,11 @@ export function generateKeyPair(algorithm?: 'ed25519' | 'rsa' | string): KeyPair
  * @param privateKey - PEM formatted private key to sign the token.
  * @returns Signed JWT string or null if an error occurs.
  */
-export function jwtCreateSignedToken(headerObject: JwtHeader, payloadObject: JwtPayload, privateKey: string): string | null;
+export function jwtCreateSignedToken(
+  headerObject: JwtHeader,
+  payloadObject: JwtPayload,
+  privateKey: string,
+): string | null;
 
 /**
  * Creates a signed service-to-service JWT using the issuing service's private key.
@@ -312,7 +328,11 @@ export function jwtGetHeaderPayload(jwt: string): JwtParts | null;
  * @param algorithm - The hashing algorithm to use (e.g., 'sha256').
  * @returns A string containing the formatted hash with metadata ($1$alg$hash$salt$) or null if an error occurs.
  */
-export function passwordCreateHashWithRandomSalt(password: string, secret: string, algorithm: string): string | null;
+export function passwordCreateHashWithRandomSalt(
+  password: string,
+  secret: string,
+  algorithm: string,
+): string | null;
 
 /**
  * Generates a password hash using the same algorithm and salt from a previously saved hash.
@@ -322,4 +342,8 @@ export function passwordCreateHashWithRandomSalt(password: string, secret: strin
  * @param secret - The pepper/secret key used for hashing.
  * @returns A hash string that should match the saved hash if the password is correct, or null if an error occurs.
  */
-export function passwordCreateHashFromSavedHash(password: string, savedPasswordHash: string, secret: string): string | null;
+export function passwordCreateHashFromSavedHash(
+  password: string,
+  savedPasswordHash: string,
+  secret: string,
+): string | null;

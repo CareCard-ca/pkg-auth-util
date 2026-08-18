@@ -56,28 +56,48 @@ describe('TypeScript Type Definitions', () => {
     // Test top-level functions directly
     const jwtDirect: string | null = jwtCreateSignedToken(header, payload, privateKey);
     const serviceJwtDirect: string | null = jwtCreateServiceToken(serviceJwtOptions);
-    const serviceAuthorizationHeaderDirect: string | null = jwtCreateServiceAuthorizationHeader(serviceJwtOptions);
+    const serviceAuthorizationHeaderDirect: string | null =
+      jwtCreateServiceAuthorizationHeader(serviceJwtOptions);
     const isValidDirect: boolean = jwtVerifySignedToken(jwtDirect || '', publicKey);
     const partsDirect: JwtParts | null = jwtGetHeaderPayload(jwtDirect || '');
     assert.strictEqual(typeof isValidDirect, 'boolean');
     assert.ok(!partsDirect || partsDirect.header);
     assert.ok(serviceJwtDirect === null || typeof serviceJwtDirect === 'string');
-    assert.ok(serviceAuthorizationHeaderDirect === null || serviceAuthorizationHeaderDirect.startsWith('Bearer '));
+    assert.ok(
+      serviceAuthorizationHeaderDirect === null ||
+        serviceAuthorizationHeaderDirect.startsWith('Bearer '),
+    );
   });
 
   it('should verify pwdUtilAuth types', () => {
     const secret = 'my-secret';
     const password = 'my-password';
     const algorithm = 'sha256';
-    const hashWithSalt: string | null = pwdUtilAuth.createPasswordHashWithRandomSalt(password, secret, algorithm);
-    const hashBasedOnSaved: string | null = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(password, hashWithSalt || '', secret);
+    const hashWithSalt: string | null = pwdUtilAuth.createPasswordHashWithRandomSalt(
+      password,
+      secret,
+      algorithm,
+    );
+    const hashBasedOnSaved: string | null = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
+      password,
+      hashWithSalt || '',
+      secret,
+    );
 
     assert.ok(hashWithSalt === null || typeof hashWithSalt === 'string');
     assert.ok(hashBasedOnSaved === null || typeof hashBasedOnSaved === 'string');
 
     // Test top-level functions directly
-    const hashWithSaltDirect: string | null = passwordCreateHashWithRandomSalt(password, secret, algorithm);
-    const hashBasedOnSavedDirect: string | null = passwordCreateHashFromSavedHash(password, hashWithSaltDirect || '', secret);
+    const hashWithSaltDirect: string | null = passwordCreateHashWithRandomSalt(
+      password,
+      secret,
+      algorithm,
+    );
+    const hashBasedOnSavedDirect: string | null = passwordCreateHashFromSavedHash(
+      password,
+      hashWithSaltDirect || '',
+      secret,
+    );
     assert.ok(hashWithSaltDirect === null || typeof hashWithSaltDirect === 'string');
     assert.ok(hashBasedOnSavedDirect === null || typeof hashBasedOnSavedDirect === 'string');
   });
@@ -112,7 +132,8 @@ describe('TypeScript Type Definitions', () => {
 
     // Verify dollarSignConnectedStringToAlgorithmHashSalt and PasswordParts
     const mockHash = '$1$sha256$hashvalue$saltvalue';
-    const pwdParts: PasswordParts | null = stringUtilAuth.dollarSignConnectedStringToAlgorithmHashSalt(mockHash);
+    const pwdParts: PasswordParts | null =
+      stringUtilAuth.dollarSignConnectedStringToAlgorithmHashSalt(mockHash);
     if (pwdParts) {
       assert.strictEqual(typeof pwdParts.version, 'string');
       assert.strictEqual(typeof pwdParts.alg, 'string');
