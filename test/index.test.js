@@ -7,6 +7,7 @@ const parallelTestFiles = [
   'test/jwtUtilAuth.test.js',
   'test/keyGen.test.js',
   'test/pwdUtilAuth.test.js',
+  'test/securityRegressions.test.js',
   'test/stringUtilAuth.test.js',
 ];
 
