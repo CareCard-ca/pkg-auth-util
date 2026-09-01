@@ -1,51 +1,64 @@
 const assert = require('assert').strict;
 const { describe, it } = require('mocha');
-const { pwdUtilAuth } = require('../index');
+const { createPasswordHash, verifyPassword } = require('../index');
 
-describe('PwdUtilAuth test', function () {
-  describe('createPasswordHashWithRandomSalt & createPasswordHashBasedOnSavedAlgorithmSalt', function () {
-    it('should create and verify hash correctly', function () {
-      const password = 'myPassword';
-      const secret = 'appSecret';
-      const algorithm = 'sha512';
+const TEST_PEPPER = 'carecard-test-pepper-is-at-least-32-bytes';
+const OTHER_PEPPER = 'carecard-other-pepper-is-at-least-32-bytes';
+const ARGON2ID_PHC_PATTERN =
+  /^\$argon2id\$v=19\$m=19456,t=2,p=1\$[A-Za-z0-9+/]{22}\$[A-Za-z0-9+/]{43}$/;
 
-      const hash = pwdUtilAuth.createPasswordHashWithRandomSalt(password, secret, algorithm);
-      assert.ok(hash);
+describe('password hashing', function () {
+  it('creates a salted Argon2id PHC credential and verifies it', async function () {
+    const savedHash = await createPasswordHash('password', TEST_PEPPER);
 
-      const isMatch = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
-        password,
-        hash,
-        secret,
-      );
-      assert.strictEqual(isMatch, hash);
+    assert.match(savedHash, ARGON2ID_PHC_PATTERN);
+    assert.strictEqual(await verifyPassword('password', savedHash, TEST_PEPPER), true);
+    assert.strictEqual(await verifyPassword('wrong password', savedHash, TEST_PEPPER), false);
+    assert.strictEqual(await verifyPassword('password', savedHash, OTHER_PEPPER), false);
+  });
 
-      const noMatch = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
-        'wrongPassword',
-        hash,
-        secret,
-      );
-      assert.notStrictEqual(noMatch, hash);
-    });
+  it('creates a unique salted credential for the same password', async function () {
+    const [firstHash, secondHash] = await Promise.all([
+      createPasswordHash('password', TEST_PEPPER),
+      createPasswordHash('password', TEST_PEPPER),
+    ]);
 
-    it('should propagate unsupported hashing algorithm errors', function () {
-      assert.throws(
-        () => pwdUtilAuth.createPasswordHashWithRandomSalt('pw', 'sec', 'invalid-alg'),
-        /Invalid digest/,
-      );
-    });
+    assert.notStrictEqual(firstHash, secondHash);
+    assert.strictEqual(await verifyPassword('password', firstHash, TEST_PEPPER), true);
+    assert.strictEqual(await verifyPassword('password', secondHash, TEST_PEPPER), true);
+  });
 
-    it('should return null on error (invalid hash format)', function () {
-      const result = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt('pw', null, 'sec');
-      assert.strictEqual(result, null);
-    });
+  it('normalizes passwords to NFC for creation and comparison', async function () {
+    const savedHash = await createPasswordHash('mot de passe café', TEST_PEPPER);
 
-    it('should return null on invalid saved hash structure', function () {
-      const result = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
-        'pw',
-        'not$enough$parts',
-        'sec',
-      );
-      assert.strictEqual(result, null);
-    });
+    assert.strictEqual(
+      await verifyPassword('mot de passe cafe\u0301', savedHash, TEST_PEPPER),
+      true,
+    );
+  });
+
+  it('rejects an undersized pepper as a configuration error', async function () {
+    await assert.rejects(createPasswordHash('password', 'too-short'), /at least 32 bytes/);
+    await assert.rejects(
+      verifyPassword('password', '$argon2id$invalid', 'too-short'),
+      /at least 32 bytes/,
+    );
+  });
+
+  it('returns false for malformed, modified, and legacy saved hashes', async function () {
+    const validHash = await createPasswordHash('password', TEST_PEPPER);
+    const invalidHashes = [
+      null,
+      '',
+      '$1$c2hhNTEy$legacy$legacy$',
+      validHash.replace('m=19456', 'm=65536'),
+      validHash.replace('v=19', 'v=16'),
+      `${validHash}=`,
+      validHash.replace(/.$/, '!'),
+    ];
+
+    for (const savedHash of invalidHashes) {
+      assert.strictEqual(await verifyPassword('password', savedHash, TEST_PEPPER), false);
+    }
   });
 });

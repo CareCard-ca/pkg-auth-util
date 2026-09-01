@@ -26,7 +26,7 @@ Non-negotiable code organization rule: Functions with the same or equivalent beh
 ## Features
 
 - **JWT Utilities**: Create, verify, and parse JSON Web Tokens with support for EdDSA (Ed25519) and RSA.
-- **Password Utilities**: Secure password hashing using HMAC with random salt and a custom string format for easy storage.
+- **Password Utilities**: Asynchronous Argon2id password hashing through Node.js `crypto`, with a unique random salt and application pepper.
 - **Key Generation**: Generate Ed25519 and RSA key pairs for JWT signing.
 - **Crypto Utilities**: Low-level cryptographic primitives for signing, verification, and hashing.
 - **String Utilities**: Base64 and Base64UrlSafe encoding/decoding, and custom string parsing.
@@ -42,7 +42,11 @@ npm install @carecard/auth-util
 ### JWT Utilities (`jwtUtilAuth`)
 
 ```javascript
-const { jwtCreateSignedToken, jwtGetHeaderPayload, jwtVerifySignedToken } = require('@carecard/auth-util');
+const {
+  jwtCreateSignedToken,
+  jwtGetHeaderPayload,
+  jwtVerifySignedToken,
+} = require('@carecard/auth-util');
 
 const header = { alg: 'EdDSA', typ: 'JWT' };
 const payload = { sub: '1234567890', name: 'John Doe' };
@@ -62,7 +66,10 @@ const { header: decodedHeader, payload: decodedPayload } = jwtGetHeaderPayload(t
 ### Service-To-Service JWT Creation
 
 ```javascript
-const { jwtCreateServiceAuthorizationHeader, jwtCreateServiceToken } = require('@carecard/auth-util');
+const {
+  jwtCreateServiceAuthorizationHeader,
+  jwtCreateServiceToken,
+} = require('@carecard/auth-util');
 
 const token = jwtCreateServiceToken({
   issuer: 'ms-institutions',
@@ -77,22 +84,25 @@ const authorization = jwtCreateServiceAuthorizationHeader({
 });
 ```
 
-### Password Utilities (`pwdUtilAuth`)
+### Password Utilities
 
 ```javascript
-const { pwdUtilAuth } = require('@carecard/auth-util');
+const { createPasswordHash, verifyPassword } = require('@carecard/auth-util');
 
-const password = 'mySecretPassword';
-const secret = 'application-wide-secret';
-const algorithm = 'sha512';
+const password = 'correct horse battery staple';
+const pepper = process.env.MS_AUTH_HASH_KEY; // At least 32 UTF-8 bytes.
 
-// Create a new password hash with a random salt
-const hash = pwdUtilAuth.createPasswordHashWithRandomSalt(password, secret, algorithm);
-// Resulting format: $1$base64(algorithm)$base64(hash)$base64(salt)$
+// Create a strict Argon2id PHC credential with a unique random salt.
+const savedHash = await createPasswordHash(password, pepper);
 
-// Verify a password against a saved hash
-const isCorrect = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(password, hash, secret) === hash;
+// Verify through the package boundary. Malformed and legacy credentials return false.
+const isCorrect = await verifyPassword(password, savedHash, pepper);
 ```
+
+Both functions preserve password spaces and normalize well-formed Unicode to
+NFC. Password-policy checks belong to `@carecard/validate`; this package hashes
+and compares the supplied value without enforcing password length or
+composition. Keep the pepper outside persisted credentials and logs.
 
 ### Key Generation
 
@@ -150,7 +160,7 @@ npm run test:types
 The package is organized into several modules:
 
 - `jwtUtilAuth`: Manages the JWT lifecycle.
-- `pwdUtilAuth`: Handles password hashing and verification.
+- `pwdUtilAuth`: Implements asynchronous Argon2id password hashing and verification behind the direct package exports.
 - `keyGen`: Utility for generating cryptographic keys.
 - `cryptoUtilAuth`: Core cryptographic operations using Node.js `crypto` module.
 - `stringUtilAuth`: String manipulation and format conversions.

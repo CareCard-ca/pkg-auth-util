@@ -113,21 +113,6 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
- * Represents the decomposed parts of a stored password hash.
- * @deprecated Use native Buffer methods or other modern alternatives.
- */
-export interface PasswordParts {
-  /** Version indicator of the hashing format. */
-  version: string;
-  /** Base64 encoded algorithm name. */
-  alg: string;
-  /** Base64 encoded password hash. */
-  hash: string;
-  /** Base64 encoded random salt. */
-  salt: string;
-}
-
-/**
  * Contains a pair of public and private cryptographic keys.
  */
 export interface KeyPair {
@@ -172,38 +157,6 @@ export const jwtUtilAuth: {
 };
 
 /**
- * Utility functions for password hashing and verification.
- * @deprecated use direct imports of the new functions.
- */
-export const pwdUtilAuth: {
-  /**
-   * Generates a password hash using a random salt and specified algorithm.
-   * @param password - The plain-text password to hash.
-   * @param secret - A pepper/secret key to combine with the password.
-   * @param algorithm - The hashing algorithm to use (e.g., 'sha256').
-   * @returns A string containing the formatted hash with metadata ($1$alg$hash$salt$) or null if an error occurs.
-   */
-  createPasswordHashWithRandomSalt: (
-    password: string,
-    secret: string,
-    algorithm: string,
-  ) => string | null;
-  /**
-   * Generates a password hash using the same algorithm and salt from a previously saved hash.
-   * Useful for verifying a password against a stored hash.
-   * @param password - The plain-text password to verify.
-   * @param savedPasswordHash - The full stored hash string (including salt and metadata).
-   * @param secret - The pepper/secret key used for hashing.
-   * @returns A hash string that should match the saved hash if the password is correct, or null if an error occurs.
-   */
-  createPasswordHashBasedOnSavedAlgorithmSalt: (
-    password: string,
-    savedPasswordHash: string,
-    secret: string,
-  ) => string | null;
-};
-
-/**
  * Utility functions for string manipulation, base64 encoding, and parsing auth-related strings.
  * @deprecated Use native Buffer methods or other modern alternatives.
  */
@@ -236,13 +189,6 @@ export const stringUtilAuth: {
    * @returns Decoded plain-text string.
    */
   base64ToAscii: (codedString: string) => string;
-  /**
-   * Parses a stored password hash string into its constituent parts.
-   * @deprecated Use native Buffer methods or other modern alternatives.
-   * @param passwordHash - The formatted hash string ($1$alg$hash$salt$).
-   * @returns A PasswordParts object or null if the format is invalid.
-   */
-  dollarSignConnectedStringToAlgorithmHashSalt: (passwordHash: string) => PasswordParts | null;
   /**
    * Splits a JWT into its three base64-encoded string parts (header, payload, signature).
    * @deprecated Use native Buffer methods or other modern alternatives.
@@ -322,28 +268,22 @@ export function jwtVerifySignedToken(jwt: string, publicKey: string): boolean;
 export function jwtGetHeaderPayload(jwt: string): JwtParts | null;
 
 /**
- * Generates a password hash using a random salt and specified algorithm.
+ * Creates an Argon2id PHC password hash with a unique random salt.
  * @param password - The plain-text password to hash.
- * @param secret - A pepper/secret key to combine with the password.
- * @param algorithm - The hashing algorithm to use (e.g., 'sha256').
- * @returns A string containing the formatted hash with metadata ($1$alg$hash$salt$) or null if an error occurs.
+ * @param pepper - A secret pepper containing at least 32 UTF-8 bytes.
+ * @returns The strict Argon2id PHC string.
  */
-export function passwordCreateHashWithRandomSalt(
-  password: string,
-  secret: string,
-  algorithm: string,
-): string | null;
+export function createPasswordHash(password: string, pepper: string): Promise<string>;
 
 /**
- * Generates a password hash using the same algorithm and salt from a previously saved hash.
- * Useful for verifying a password against a stored hash.
+ * Verifies a password against a strict CareCard Argon2id PHC hash.
  * @param password - The plain-text password to verify.
- * @param savedPasswordHash - The full stored hash string (including salt and metadata).
- * @param secret - The pepper/secret key used for hashing.
- * @returns A hash string that should match the saved hash if the password is correct, or null if an error occurs.
+ * @param savedHash - The stored Argon2id PHC hash.
+ * @param pepper - The same secret pepper used when creating the hash.
+ * @returns False for a mismatch or malformed/unsupported saved hash.
  */
-export function passwordCreateHashFromSavedHash(
+export function verifyPassword(
   password: string,
-  savedPasswordHash: string,
-  secret: string,
-): string | null;
+  savedHash: string,
+  pepper: string,
+): Promise<boolean>;

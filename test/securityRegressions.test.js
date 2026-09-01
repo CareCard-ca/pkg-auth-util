@@ -8,34 +8,32 @@ const {
   jwtCreateSignedToken,
   jwtGetHeaderPayload,
   jwtVerifySignedToken,
-  passwordCreateHashFromSavedHash,
-  passwordCreateHashWithRandomSalt,
+  createPasswordHash,
+  verifyPassword,
 } = require('../index');
 
 describe('authentication security regressions', function () {
-  it('uses each random password salt in the resulting credential digest', function () {
-    const firstHash = passwordCreateHashWithRandomSalt('Password_1', 'pepper', 'sha512');
-    const secondHash = passwordCreateHashWithRandomSalt('Password_1', 'pepper', 'sha512');
-
-    assert.notStrictEqual(firstHash.split('$')[3], secondHash.split('$')[3]);
-    assert.strictEqual(
-      passwordCreateHashFromSavedHash('Password_1', firstHash, 'pepper'),
-      firstHash,
-    );
-    assert.strictEqual(
-      passwordCreateHashFromSavedHash('Password_1', secondHash, 'pepper'),
-      secondHash,
-    );
-  });
-
-  it('continues to verify credentials stored before salt affected the digest', function () {
+  it('does not accept a credential stored in the removed HMAC format', async function () {
     const legacyHash =
       '$1$c2hhNTEy$SOk/04Wn/ce1YIXHlUIqt5SgsuCCLIFjxpzHloVSxFh/z8JuLFshAaGNCkIRf47QSPCOJpkJ476N2eq1Yg1+yg==$6h29BnpUkqfrmtnY1xUrAGZcpcAl5cUEJ4Qjj+BGXbo=$';
 
     assert.strictEqual(
-      passwordCreateHashFromSavedHash('mySecretPassword', legacyHash, 'bigSecret'),
-      legacyHash,
+      await verifyPassword(
+        'mySecretPassword',
+        legacyHash,
+        'carecard-test-pepper-is-at-least-32-bytes',
+      ),
+      false,
     );
+  });
+
+  it('preserves leading, trailing, and internal password spaces', async function () {
+    const pepper = 'carecard-test-pepper-is-at-least-32-bytes';
+    const password = '  spaced password  ';
+    const savedHash = await createPasswordHash(password, pepper);
+
+    assert.strictEqual(await verifyPassword(password, savedHash, pepper), true);
+    assert.strictEqual(await verifyPassword(password.trim(), savedHash, pepper), false);
   });
 
   it('preserves explicit zero-valued registered JWT times', function () {
