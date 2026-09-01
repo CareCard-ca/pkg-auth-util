@@ -10,8 +10,8 @@ module.exports = {
   jwtCreateServiceAuthorizationHeader: jwtUtilAuth.createServiceAuthorizationHeader,
   jwtVerifySignedToken: jwtUtilAuth.verifyJwtSignature,
   jwtGetHeaderPayload: jwtUtilAuth.getHeaderPayloadFromJwt,
-  passwordCreateHashWithRandomSalt: pwdUtilAuth.createPasswordHashWithRandomSalt,
-  passwordCreateHashFromSavedHash: pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt,
+  createPasswordHash: pwdUtilAuth.createPasswordHash,
+  verifyPassword: pwdUtilAuth.verifyPassword,
 
   // Deprecated
   /**
@@ -21,14 +21,6 @@ module.exports = {
     createSignedJwtFromObject: jwtUtilAuth.createSignedJwtFromObject,
     verifyJwtSignature: jwtUtilAuth.verifyJwtSignature,
     getHeaderPayloadFromJwt: jwtUtilAuth.getHeaderPayloadFromJwt,
-  },
-  /**
-   * @deprecated use direct import of the new functions.
-   */
-  pwdUtilAuth: {
-    createPasswordHashWithRandomSalt: pwdUtilAuth.createPasswordHashWithRandomSalt,
-    createPasswordHashBasedOnSavedAlgorithmSalt:
-      pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt,
   },
   /**
    * @deprecated Use native Buffer methods or other modern alternatives.

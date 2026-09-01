@@ -1,6 +1,7 @@
 import assert from 'assert';
 import { describe, it } from 'mocha';
 import {
+  createPasswordHash,
   generateKeyPair,
   jwtCreateServiceAuthorizationHeader,
   jwtCreateServiceToken,
@@ -12,12 +13,9 @@ import {
   jwtUtilAuth,
   jwtVerifySignedToken,
   KeyPair,
-  passwordCreateHashFromSavedHash,
-  passwordCreateHashWithRandomSalt,
-  PasswordParts,
-  pwdUtilAuth,
   ServiceJwtOptions,
   stringUtilAuth,
+  verifyPassword,
 } from '../index';
 
 describe('TypeScript Type Definitions', () => {
@@ -69,37 +67,14 @@ describe('TypeScript Type Definitions', () => {
     );
   });
 
-  it('should verify pwdUtilAuth types', () => {
-    const secret = 'my-secret';
+  it('should verify password hash types', async () => {
+    const secret = 'carecard-test-pepper-is-at-least-32-bytes';
     const password = 'my-password';
-    const algorithm = 'sha256';
-    const hashWithSalt: string | null = pwdUtilAuth.createPasswordHashWithRandomSalt(
-      password,
-      secret,
-      algorithm,
-    );
-    const hashBasedOnSaved: string | null = pwdUtilAuth.createPasswordHashBasedOnSavedAlgorithmSalt(
-      password,
-      hashWithSalt || '',
-      secret,
-    );
+    const savedHash: string = await createPasswordHash(password, secret);
+    const matches: boolean = await verifyPassword(password, savedHash, secret);
 
-    assert.ok(hashWithSalt === null || typeof hashWithSalt === 'string');
-    assert.ok(hashBasedOnSaved === null || typeof hashBasedOnSaved === 'string');
-
-    // Test top-level functions directly
-    const hashWithSaltDirect: string | null = passwordCreateHashWithRandomSalt(
-      password,
-      secret,
-      algorithm,
-    );
-    const hashBasedOnSavedDirect: string | null = passwordCreateHashFromSavedHash(
-      password,
-      hashWithSaltDirect || '',
-      secret,
-    );
-    assert.ok(hashWithSaltDirect === null || typeof hashWithSaltDirect === 'string');
-    assert.ok(hashBasedOnSavedDirect === null || typeof hashBasedOnSavedDirect === 'string');
+    assert.strictEqual(typeof savedHash, 'string');
+    assert.strictEqual(typeof matches, 'boolean');
   });
 
   it('should verify generateKeyPair types and KeyPair interface', () => {
@@ -115,7 +90,7 @@ describe('TypeScript Type Definitions', () => {
     assert.ok(defaultKeys.privateKey);
   });
 
-  it('should verify stringUtilAuth types and PasswordParts interface', () => {
+  it('should verify stringUtilAuth types', () => {
     const safeStr: string = stringUtilAuth.makeStringUrlSafe('a+b/c=');
     const unsafeStr: string = stringUtilAuth.reverseStringUrlSafe(safeStr);
     const b64: string = stringUtilAuth.asciiToBase64('hello');
@@ -129,17 +104,6 @@ describe('TypeScript Type Definitions', () => {
     assert.strictEqual(typeof ascii, 'string');
     assert.strictEqual(typeof objB64, 'string');
     assert.ok(backToObj);
-
-    // Verify dollarSignConnectedStringToAlgorithmHashSalt and PasswordParts
-    const mockHash = '$1$sha256$hashvalue$saltvalue';
-    const pwdParts: PasswordParts | null =
-      stringUtilAuth.dollarSignConnectedStringToAlgorithmHashSalt(mockHash);
-    if (pwdParts) {
-      assert.strictEqual(typeof pwdParts.version, 'string');
-      assert.strictEqual(typeof pwdParts.alg, 'string');
-      assert.strictEqual(typeof pwdParts.hash, 'string');
-      assert.strictEqual(typeof pwdParts.salt, 'string');
-    }
 
     // Verify dotConnectedStringToHeaderPayloadSignature
     const mockJwt = 'header.payload.signature';

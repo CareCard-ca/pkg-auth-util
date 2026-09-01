@@ -7,8 +7,8 @@ const {
   jwtCreateSignedToken,
   jwtVerifySignedToken,
   jwtGetHeaderPayload,
-  passwordCreateHashWithRandomSalt,
-  passwordCreateHashFromSavedHash,
+  createPasswordHash,
+  verifyPassword,
 } = require('../index');
 const keys = require('./keys/keys');
 
@@ -102,24 +102,10 @@ describe('Index/JwtUtilAuth', function () {
 });
 
 describe('Index/PwdUtilAuth', function () {
-  it('passwordCreateHashWithRandomSalt called with save hash', function () {
-    const password = 'mySecretPassword';
-    const secret = 'bigSecret';
-    const algorithm = 'sha512';
+  it('creates and verifies a password credential through direct exports', async function () {
+    const pepper = 'carecard-test-pepper-is-at-least-32-bytes';
+    const savedHash = await createPasswordHash('mySecretPassword', pepper);
 
-    const hash = passwordCreateHashWithRandomSalt(password, secret, algorithm);
-
-    assert.deepStrictEqual(hash.length > 40, true);
-  });
-
-  it('passwordCreateHashFromSavedHash called with saved hash', function () {
-    const savedHash =
-      '$1$c2hhNTEy$SOk/04Wn/ce1YIXHlUIqt5SgsuCCLIFjxpzHloVSxFh/z8JuLFshAaGNCkIRf47QSPCOJpkJ476N2eq1Yg1+yg==$6h29BnpUkqfrmtnY1xUrAGZcpcAl5cUEJ4Qjj+BGXbo=$';
-    const password = 'mySecretPassword';
-    const secret = 'bigSecret';
-
-    const hash = passwordCreateHashFromSavedHash(password, savedHash, secret);
-
-    assert.deepStrictEqual(hash, savedHash);
+    assert.strictEqual(await verifyPassword('mySecretPassword', savedHash, pepper), true);
   });
 });

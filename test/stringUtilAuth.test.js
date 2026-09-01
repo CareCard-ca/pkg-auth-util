@@ -69,35 +69,6 @@ describe('StringUtilAuth test', function () {
     });
   });
 
-  describe('dollarSignConnectedStringToAlgorithmHashSalt', function () {
-    it('should split at $ and return object', function () {
-      const inputHash = '$1$c2hhNTEy$eyJhbGciOiJzaG$OiJzaGE1MTIiL$';
-      const expectedObject = {
-        version: '1',
-        alg: 'c2hhNTEy',
-        hash: 'eyJhbGciOiJzaG',
-        salt: 'OiJzaGE1MTIiL',
-      };
-
-      const returnedObject = stringUtilAuth.dollarSignConnectedStringToAlgorithmHashSalt(inputHash);
-      assert.deepStrictEqual(returnedObject, expectedObject);
-    });
-
-    it('should parse password hash correctly', function () {
-      const validHash = '$1$someAlg$someHash$someSalt$someExtra'; // length 6
-      const result = stringUtilAuth.dollarSignConnectedStringToAlgorithmHashSalt(validHash);
-      assert.ok(result);
-      assert.strictEqual(result.version, '1');
-      assert.strictEqual(result.alg, 'someAlg');
-      assert.strictEqual(result.hash, 'someHash');
-      assert.strictEqual(result.salt, 'someSalt');
-
-      const invalidHash = '$1$too$few$parts';
-      const resultNull = stringUtilAuth.dollarSignConnectedStringToAlgorithmHashSalt(invalidHash);
-      assert.strictEqual(resultNull, null);
-    });
-  });
-
   describe('dotConnectedStringToHeaderPayloadSignature', function () {
     it('should split at . and return object', function () {
       const inputString = 'c2hhNTEy.eyJhbGciOiJzaG.OiJzaGE1MTIiL';

@@ -107,10 +107,10 @@ depend on those folders being present.
 - `lib/cryptoUtilAuth.js` wraps Node.js `crypto` primitives for signing,
   verifying, generating HMACs, and salts.
 - `lib/keyGen.js` owns Ed25519 and RSA key generation.
-- `lib/stringUtilAuth.js` owns legacy base64, base64-url-safe, JWT, and
-  password-hash string parsing helpers.
-- Keep direct exports preferred and deprecated nested exports backward
-  compatible unless a breaking change is explicitly requested.
+- `lib/stringUtilAuth.js` owns legacy base64, base64-url-safe, and JWT string
+  helpers. Password-hash parsing stays private to `lib/pwdUtilAuth.js`.
+- Keep direct exports as the public package API. Do not add password aliases,
+  nested password objects, or compatibility parsers.
 - Preserve CommonJS exports unless the repository intentionally migrates module
   systems.
 
@@ -133,27 +133,38 @@ depend on those folders being present.
 
 ## Password And Crypto Layer
 
-- Preserve the HMAC-based password hashing behavior.
-- Preserve the saved password hash string format:
+- Create password credentials with Node.js `crypto.argon2` using Argon2id,
+  version 19, 19,456 KiB memory, two passes, one degree of parallelism, a
+  unique 16-byte random salt, a 32-byte tag, and a pepper of at least 32 UTF-8
+  bytes.
+- Persist only the strict unpadded PHC string:
 
   ```text
-  $1$base64(algorithm)$base64(hash)$base64(salt)$
+  $argon2id$v=19$m=19456,t=2,p=1$base64(salt)$base64(tag)
   ```
 
-- Always handle salt automatically when creating new password hashes.
-- Do not silently change cryptographic defaults, password hash string format,
-  salt behavior, or key output format.
-- Prefer Node.js `crypto` primitives already used by the package over new
-  dependencies.
+- `createPasswordHash(password, pepper)` and
+  `verifyPassword(password, savedHash, pepper)` are the only public password
+  credential APIs; both are asynchronous.
+- Generate salts internally for every credential. Never accept caller-selected
+  salts and never persist or log the pepper.
+- Normalize well-formed Unicode passwords to NFC before deriving the tag, but
+  do not trim or impose password policy here. `@carecard/validate` owns policy,
+  while login intentionally permits existing passwords of any length.
+- Return `false` for malformed, non-canonical, differently parameterized, or
+  legacy saved hashes. Throw for programmer/configuration errors such as an
+  invalid pepper.
+- Do not add legacy HMAC verification. Seeded accounts must be rehashed before
+  the Argon2id-only service starts.
+- Prefer Node.js `crypto` primitives over new dependencies.
 
 ## String Utilities
 
 - Use `stringUtilAuth` for base64 and URL-safe string transformations to keep
   parsing and serialization consistent.
-- Keep legacy formatted string parsing behavior backward-compatible.
-- Cover edge cases for malformed JWT strings, malformed password hashes, bad
-  base64 input, missing segments, and unsupported algorithms when these paths
-  change.
+- Do not expose password-hash parsing through `stringUtilAuth`.
+- Cover edge cases for malformed JWT strings, bad base64 input, missing
+  segments, and unsupported algorithms when these paths change.
 
 ## Security And Error Handling
 
