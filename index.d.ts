@@ -12,6 +12,8 @@ export interface JwtHeader {
   alg?: string;
   /** The media type of the JWT. Defaults to 'JWT'. */
   typ?: string;
+  /** RFC 7638 thumbprint identifying the signing key. */
+  kid?: string;
 
   /** Any other custom header fields. */
   [key: string]: unknown;
@@ -58,16 +60,14 @@ export interface ServiceJwtOptions {
   issuer: string;
   /** Receiving microservice name or names. */
   audience: string | string[];
-  /** Private key owned by the issuing microservice. */
-  privateKey: string;
+  /** Parsed private Ed25519 JWK owned by the issuing microservice. */
+  signingJwk: JwtSigningJwk;
   /** Subject claim. Defaults to issuer. */
   subject?: string;
   /** Issued-at timestamp in seconds or milliseconds. Defaults to now. */
   issuedAt?: number;
   /** Token lifetime in seconds. Defaults to 60. */
   expiresInSeconds?: number;
-  /** JWT signing algorithm. Defaults to EdDSA. */
-  algorithm?: string;
   /** Additional non-sensitive JWT claims. */
   claims?: Record<string, unknown>;
 }
@@ -112,49 +112,35 @@ export interface AuthenticatedRequest extends Request {
   visitor?: VisitorRequestObject | null;
 }
 
-/**
- * Contains a pair of public and private cryptographic keys.
- */
-export interface KeyPair {
-  /** PEM formatted public key string. */
-  publicKey: string;
-  /** PEM formatted private key string. */
-  privateKey: string;
+declare const jwtSigningJwkBrand: unique symbol;
+declare const jwtVerificationJwksBrand: unique symbol;
+declare const passwordHashKeyringBrand: unique symbol;
+
+export interface JwtSigningJwk {
+  readonly kid: string;
+  readonly [jwtSigningJwkBrand]: true;
 }
 
-/**
- * Utility functions for creating, verifying, and parsing JSON Web Tokens (JWT).
- * @deprecated use direct import of the new functions.
- */
-export const jwtUtilAuth: {
-  /**
-   * Creates a signed JWT from header and payload objects.
-   * Automatically normalizes header (sets alg/typ) and payload (sets iat/exp/etc. in seconds).
-   * @param headerObject - Header data for the JWT.
-   * @param payloadObject - Payload data for the JWT.
-   * @param privateKey - PEM formatted private key to sign the token.
-   * @returns Signed JWT string, or null when the private key is missing. Unexpected failures throw.
-   */
-  createSignedJwtFromObject: (
-    headerObject: JwtHeader,
-    payloadObject: JwtPayload,
-    privateKey: string,
-  ) => string | null;
-  /**
-   * Verifies the signature of a JWT using a public key.
-   * @param jwt - The JWT string to verify.
-   * @param publicKey - PEM formatted public key.
-   * @returns True if the signature is valid, false for malformed or invalid tokens. Unexpected failures throw.
-   */
-  verifyJwtSignature: (jwt: string, publicKey: string) => boolean;
-  /**
-   * Decodes a JWT and returns its header and payload as objects.
-   * Note: This does NOT verify the signature.
-   * @param jwt - The JWT string to parse.
-   * @returns An object containing the header and payload, or null if parsing fails.
-   */
-  getHeaderPayloadFromJwt: (jwt: string) => JwtParts | null;
-};
+export interface JwtVerificationJwks {
+  readonly kids: readonly string[];
+  readonly [jwtVerificationJwksBrand]: true;
+}
+
+export interface PasswordHashKeyring {
+  readonly activeKeyId: string;
+  readonly keyIds: readonly string[];
+  readonly [passwordHashKeyringBrand]: true;
+}
+
+export interface PasswordCredential {
+  readonly hash: string;
+  readonly hashKeyId: string;
+}
+
+export interface PasswordCredentialVerification {
+  readonly isValid: boolean;
+  readonly needsRehash: boolean;
+}
 
 /**
  * Utility functions for string manipulation, base64 encoding, and parsing auth-related strings.
@@ -217,24 +203,14 @@ export const stringUtilAuth: {
 };
 
 /**
- * Generates a public/private key pair for JWT signing.
- * @param algorithm - The algorithm to use ('ed25519' or 'rsa'). Defaults to 'ed25519'.
- * @returns A KeyPair object containing PEM formatted keys.
- */
-export function generateKeyPair(algorithm?: 'ed25519' | 'rsa' | string): KeyPair;
-
-/**
- * Creates a signed JWT from header and payload objects.
- * Automatically normalizes header (sets alg/typ) and payload (sets iat/exp/etc. in seconds).
- * @param headerObject - Header data for the JWT.
+ * Creates an EdDSA JWT with a fixed JWT header and the signing JWK's kid.
  * @param payloadObject - Payload data for the JWT.
- * @param privateKey - PEM formatted private key to sign the token.
- * @returns Signed JWT string or null if an error occurs.
+ * @param signingJwk - A parsed private Ed25519 signing JWK.
+ * @returns Signed JWT string or null for invalid input.
  */
 export function jwtCreateSignedToken(
-  headerObject: JwtHeader,
   payloadObject: JwtPayload,
-  privateKey: string,
+  signingJwk: JwtSigningJwk,
 ): string | null;
 
 /**
@@ -252,12 +228,18 @@ export function jwtCreateServiceToken(options: ServiceJwtOptions): string | null
 export function jwtCreateServiceAuthorizationHeader(options: ServiceJwtOptions): string | null;
 
 /**
- * Verifies the signature of a JWT using a public key.
+ * Verifies a JWT by selecting its kid from a parsed public JWKS.
  * @param jwt - The JWT string to verify.
- * @param publicKey - PEM formatted public key.
+ * @param verificationJwks - Parsed public Ed25519 verification keys.
  * @returns True if the signature is valid, false otherwise.
  */
-export function jwtVerifySignedToken(jwt: string, publicKey: string): boolean;
+export function jwtVerifySignedToken(jwt: string, verificationJwks: JwtVerificationJwks): boolean;
+
+/** Parses and validates one private Ed25519 signing JWK. */
+export function parseJwtSigningJwk(serializedJwk: string): JwtSigningJwk;
+
+/** Parses and validates an RFC 7517 public Ed25519 JWKS. */
+export function parseJwtVerificationJwks(serializedJwks: string): JwtVerificationJwks;
 
 /**
  * Decodes a JWT and returns its header and payload as objects.
@@ -267,23 +249,21 @@ export function jwtVerifySignedToken(jwt: string, publicKey: string): boolean;
  */
 export function jwtGetHeaderPayload(jwt: string): JwtParts | null;
 
-/**
- * Creates an Argon2id PHC password hash with a unique random salt.
- * @param password - The plain-text password to hash.
- * @param pepper - A secret pepper containing at least 32 UTF-8 bytes.
- * @returns The strict Argon2id PHC string.
- */
-export function createPasswordHash(password: string, pepper: string): Promise<string>;
+/** Parses a validated active/retiring password hash keyring. */
+export function parsePasswordHashKeyring(
+  activeKeyId: string,
+  serializedKeyring: string,
+): PasswordHashKeyring;
 
-/**
- * Verifies a password against a strict CareCard Argon2id PHC hash.
- * @param password - The plain-text password to verify.
- * @param savedHash - The stored Argon2id PHC hash.
- * @param pepper - The same secret pepper used when creating the hash.
- * @returns False for a mismatch or malformed/unsupported saved hash.
- */
-export function verifyPassword(
+/** Creates a freshly salted active-key Argon2id credential. */
+export function createPasswordCredential(
   password: string,
-  savedHash: string,
-  pepper: string,
-): Promise<boolean>;
+  keyring: PasswordHashKeyring,
+): Promise<PasswordCredential>;
+
+/** Verifies a credential and reports whether it should move to the active key. */
+export function verifyPasswordCredential(
+  password: string,
+  credential: PasswordCredential,
+  keyring: PasswordHashKeyring,
+): Promise<PasswordCredentialVerification>;

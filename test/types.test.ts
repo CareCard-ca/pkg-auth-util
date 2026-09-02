@@ -1,117 +1,99 @@
-import assert from 'assert';
+import assert from 'node:assert';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 import { describe, it } from 'mocha';
 import {
-  createPasswordHash,
-  generateKeyPair,
+  createPasswordCredential,
   jwtCreateServiceAuthorizationHeader,
   jwtCreateServiceToken,
   jwtCreateSignedToken,
   jwtGetHeaderPayload,
-  JwtHeader,
-  JwtParts,
-  JwtPayload,
-  jwtUtilAuth,
   jwtVerifySignedToken,
-  KeyPair,
-  ServiceJwtOptions,
+  parseJwtSigningJwk,
+  parseJwtVerificationJwks,
+  parsePasswordHashKeyring,
   stringUtilAuth,
-  verifyPassword,
+  verifyPasswordCredential,
+  type JwtParts,
+  type JwtPayload,
+  type JwtSigningJwk,
+  type JwtVerificationJwks,
+  type PasswordCredential,
+  type PasswordCredentialVerification,
+  type PasswordHashKeyring,
+  type ServiceJwtOptions,
 } from '../index';
 
-describe('TypeScript Type Definitions', () => {
-  it('should verify jwtUtilAuth types and interfaces', () => {
-    const header: JwtHeader = { alg: 'EdDSA', typ: 'JWT', custom: 'value' };
-    const payload: JwtPayload = {
-      sub: '123',
-      iat: 1234567890,
-      exp: 1234571490,
-      nbf: 1234567890,
-      auth_time: 1234567890,
-      custom_claim: 'foo',
-    };
-    const { privateKey, publicKey }: KeyPair = generateKeyPair('ed25519');
+function createParsedIdentity(): {
+  signingJwk: JwtSigningJwk;
+  verificationJwks: JwtVerificationJwks;
+} {
+  const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+  const privateJwk = privateKey.export({ format: 'jwk' });
+  const publicJwk = publicKey.export({ format: 'jwk' });
+  const canonical = JSON.stringify({ crv: 'Ed25519', kty: 'OKP', x: publicJwk.x });
+  const kid = createHash('sha256').update(canonical).digest('base64url');
+  const signingJwk = parseJwtSigningJwk(
+    JSON.stringify({ ...privateJwk, alg: 'EdDSA', use: 'sig', key_ops: ['sign'], kid }),
+  );
+  const verificationJwks = parseJwtVerificationJwks(
+    JSON.stringify({
+      keys: [{ ...publicJwk, alg: 'EdDSA', use: 'sig', key_ops: ['verify'], kid }],
+    }),
+  );
+  return { signingJwk, verificationJwks };
+}
 
-    const jwt: string | null = jwtUtilAuth.createSignedJwtFromObject(header, payload, privateKey);
-    const serviceJwtOptions: ServiceJwtOptions = {
+describe('TypeScript type definitions', () => {
+  it('supports the JWK JWT public contract', () => {
+    const { signingJwk, verificationJwks } = createParsedIdentity();
+    const payload: JwtPayload = { sub: '123', roles: ['ad'], custom_claim: 'value' };
+    const options: ServiceJwtOptions = {
       issuer: 'ms-institutions',
       audience: 'ms-auth',
-      privateKey,
-      claims: {
-        route: '/api/v1/ms-auth/users/by-ids',
-      },
+      signingJwk,
+      claims: { route: '/api/v1/ms-auth/users/by-ids' },
     };
-    const isValid: boolean = jwtUtilAuth.verifyJwtSignature(jwt || '', publicKey);
-    const parts: JwtParts | null = jwtUtilAuth.getHeaderPayloadFromJwt(jwt || '');
+    const jwt: string | null = jwtCreateSignedToken(payload, signingJwk);
+    const serviceJwt: string | null = jwtCreateServiceToken(options);
+    const authorization: string | null = jwtCreateServiceAuthorizationHeader(options);
+    const isValid: boolean = jwtVerifySignedToken(jwt || '', verificationJwks);
+    const parts: JwtParts | null = jwtGetHeaderPayload(jwt || '');
 
-    assert.strictEqual(typeof isValid, 'boolean');
-    if (parts) {
-      assert.ok(parts.header);
-      assert.ok(parts.payload);
-      assert.strictEqual(parts.header.alg, header.alg);
-      assert.strictEqual(parts.payload.sub, payload.sub);
-    }
+    assert.strictEqual(isValid, true);
+    assert.strictEqual(parts?.payload.sub, '123');
+    assert.ok(serviceJwt);
+    assert.ok(authorization?.startsWith('Bearer '));
+  });
 
-    // Test top-level functions directly
-    const jwtDirect: string | null = jwtCreateSignedToken(header, payload, privateKey);
-    const serviceJwtDirect: string | null = jwtCreateServiceToken(serviceJwtOptions);
-    const serviceAuthorizationHeaderDirect: string | null =
-      jwtCreateServiceAuthorizationHeader(serviceJwtOptions);
-    const isValidDirect: boolean = jwtVerifySignedToken(jwtDirect || '', publicKey);
-    const partsDirect: JwtParts | null = jwtGetHeaderPayload(jwtDirect || '');
-    assert.strictEqual(typeof isValidDirect, 'boolean');
-    assert.ok(!partsDirect || partsDirect.header);
-    assert.ok(serviceJwtDirect === null || typeof serviceJwtDirect === 'string');
-    assert.ok(
-      serviceAuthorizationHeaderDirect === null ||
-        serviceAuthorizationHeaderDirect.startsWith('Bearer '),
+  it('supports the password keyring public contract', async () => {
+    const keyring: PasswordHashKeyring = parsePasswordHashKeyring(
+      'active',
+      `active:${Buffer.alloc(32, 5).toString('base64')}`,
     );
+    const credential: PasswordCredential = await createPasswordCredential('my-password', keyring);
+    const result: PasswordCredentialVerification = await verifyPasswordCredential(
+      'my-password',
+      credential,
+      keyring,
+    );
+
+    assert.strictEqual(result.isValid, true);
   });
 
-  it('should verify password hash types', async () => {
-    const secret = 'carecard-test-pepper-is-at-least-32-bytes';
-    const password = 'my-password';
-    const savedHash: string = await createPasswordHash(password, secret);
-    const matches: boolean = await verifyPassword(password, savedHash, secret);
+  it('supports retained string utility types', () => {
+    const safe: string = stringUtilAuth.makeStringUrlSafe('a+b/c=');
+    const unsafe: string = stringUtilAuth.reverseStringUrlSafe(safe);
+    const base64: string = stringUtilAuth.asciiToBase64('hello');
+    const plain: string = stringUtilAuth.base64ToAscii(base64);
+    const encoded: string = stringUtilAuth.objectToBase64UrlSafeString({ a: 1 });
+    const decoded: unknown = stringUtilAuth.urlSafeBase64ToObject(encoded);
+    const parts = stringUtilAuth.dotConnectedStringToHeaderPayloadSignature(
+      'header.payload.signature',
+    );
 
-    assert.strictEqual(typeof savedHash, 'string');
-    assert.strictEqual(typeof matches, 'boolean');
-  });
-
-  it('should verify generateKeyPair types and KeyPair interface', () => {
-    const keys: KeyPair = generateKeyPair('ed25519');
-    const rsaKeys: KeyPair = generateKeyPair('rsa');
-    const defaultKeys: KeyPair = generateKeyPair();
-
-    assert.ok(keys.publicKey);
-    assert.ok(keys.privateKey);
-    assert.ok(rsaKeys.publicKey);
-    assert.ok(rsaKeys.privateKey);
-    assert.ok(defaultKeys.publicKey);
-    assert.ok(defaultKeys.privateKey);
-  });
-
-  it('should verify stringUtilAuth types', () => {
-    const safeStr: string = stringUtilAuth.makeStringUrlSafe('a+b/c=');
-    const unsafeStr: string = stringUtilAuth.reverseStringUrlSafe(safeStr);
-    const b64: string = stringUtilAuth.asciiToBase64('hello');
-    const ascii: string = stringUtilAuth.base64ToAscii(b64);
-    const objB64: string = stringUtilAuth.objectToBase64UrlSafeString({ a: 1 });
-    const backToObj: unknown = stringUtilAuth.urlSafeBase64ToObject(objB64);
-
-    assert.strictEqual(typeof safeStr, 'string');
-    assert.strictEqual(typeof unsafeStr, 'string');
-    assert.strictEqual(typeof b64, 'string');
-    assert.strictEqual(typeof ascii, 'string');
-    assert.strictEqual(typeof objB64, 'string');
-    assert.ok(backToObj);
-
-    // Verify dotConnectedStringToHeaderPayloadSignature
-    const mockJwt = 'header.payload.signature';
-    const jwtDots = stringUtilAuth.dotConnectedStringToHeaderPayloadSignature(mockJwt);
-    if (jwtDots) {
-      assert.strictEqual(typeof jwtDots.header, 'string');
-      assert.strictEqual(typeof jwtDots.payload, 'string');
-      assert.strictEqual(typeof jwtDots.signature, 'string');
-    }
+    assert.strictEqual(typeof unsafe, 'string');
+    assert.strictEqual(plain, 'hello');
+    assert.ok(decoded);
+    assert.strictEqual(parts?.payload, 'payload');
   });
 });

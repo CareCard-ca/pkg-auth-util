@@ -1,64 +1,60 @@
-const assert = require('assert').strict;
-const { describe, it } = require('mocha');
-const { createPasswordHash, verifyPassword } = require('../index');
+'use strict';
 
-const TEST_PEPPER = 'carecard-test-pepper-is-at-least-32-bytes';
-const OTHER_PEPPER = 'carecard-other-pepper-is-at-least-32-bytes';
-const ARGON2ID_PHC_PATTERN =
-  /^\$argon2id\$v=19\$m=19456,t=2,p=1\$[A-Za-z0-9+/]{22}\$[A-Za-z0-9+/]{43}$/;
+const assert = require('node:assert').strict;
+const {
+  createPasswordCredential,
+  parsePasswordHashKeyring,
+  verifyPasswordCredential,
+} = require('..');
 
-describe('password hashing', function () {
-  it('creates a salted Argon2id PHC credential and verifies it', async function () {
-    const savedHash = await createPasswordHash('password', TEST_PEPPER);
+const encodedKey = Buffer.alloc(32, 7).toString('base64');
+const keyring = parsePasswordHashKeyring('test-key', `test-key:${encodedKey}`);
+const invalidResult = { isValid: false, needsRehash: false };
 
-    assert.match(savedHash, ARGON2ID_PHC_PATTERN);
-    assert.strictEqual(await verifyPassword('password', savedHash, TEST_PEPPER), true);
-    assert.strictEqual(await verifyPassword('wrong password', savedHash, TEST_PEPPER), false);
-    assert.strictEqual(await verifyPassword('password', savedHash, OTHER_PEPPER), false);
-  });
+describe('password credentials', function () {
+  it('normalizes well-formed Unicode passwords to NFC', async function () {
+    const credential = await createPasswordCredential('mot de passe café', keyring);
 
-  it('creates a unique salted credential for the same password', async function () {
-    const [firstHash, secondHash] = await Promise.all([
-      createPasswordHash('password', TEST_PEPPER),
-      createPasswordHash('password', TEST_PEPPER),
-    ]);
-
-    assert.notStrictEqual(firstHash, secondHash);
-    assert.strictEqual(await verifyPassword('password', firstHash, TEST_PEPPER), true);
-    assert.strictEqual(await verifyPassword('password', secondHash, TEST_PEPPER), true);
-  });
-
-  it('normalizes passwords to NFC for creation and comparison', async function () {
-    const savedHash = await createPasswordHash('mot de passe café', TEST_PEPPER);
-
-    assert.strictEqual(
-      await verifyPassword('mot de passe cafe\u0301', savedHash, TEST_PEPPER),
-      true,
+    assert.deepStrictEqual(
+      await verifyPasswordCredential('mot de passe cafe\u0301', credential, keyring),
+      { isValid: true, needsRehash: false },
     );
   });
 
-  it('rejects an undersized pepper as a configuration error', async function () {
-    await assert.rejects(createPasswordHash('password', 'too-short'), /at least 32 bytes/);
+  it('rejects malformed Unicode password input', async function () {
+    await assert.rejects(createPasswordCredential('\ud800', keyring), /well-formed Unicode/);
+    const credential = await createPasswordCredential('password phrase', keyring);
+    assert.deepStrictEqual(
+      await verifyPasswordCredential('\ud800', credential, keyring),
+      invalidResult,
+    );
+  });
+
+  it('requires a keyring returned by the public parser', async function () {
     await assert.rejects(
-      verifyPassword('password', '$argon2id$invalid', 'too-short'),
-      /at least 32 bytes/,
+      createPasswordCredential('password phrase', { activeKeyId: 'test-key' }),
+      /parsed password hash keyring/,
+    );
+    await assert.rejects(
+      verifyPasswordCredential('password phrase', {}, { activeKeyId: 'test-key' }),
+      /parsed password hash keyring/,
     );
   });
 
-  it('returns false for malformed, modified, and legacy saved hashes', async function () {
-    const validHash = await createPasswordHash('password', TEST_PEPPER);
+  it('rejects noncanonical and differently parameterized hashes', async function () {
+    const credential = await createPasswordCredential('password phrase', keyring);
     const invalidHashes = [
-      null,
-      '',
-      '$1$c2hhNTEy$legacy$legacy$',
-      validHash.replace('m=19456', 'm=65536'),
-      validHash.replace('v=19', 'v=16'),
-      `${validHash}=`,
-      validHash.replace(/.$/, '!'),
+      credential.hash.replace('$argon2id$', '$argon2i$'),
+      credential.hash.replace('m=19456', 'm=19457'),
+      `${credential.hash}=`,
+      '$argon2id$v=19$m=19456,t=2,p=1$invalid$invalid',
     ];
 
-    for (const savedHash of invalidHashes) {
-      assert.strictEqual(await verifyPassword('password', savedHash, TEST_PEPPER), false);
+    for (const hash of invalidHashes) {
+      assert.deepStrictEqual(
+        await verifyPasswordCredential('password phrase', { hash, hashKeyId: 'test-key' }, keyring),
+        invalidResult,
+      );
     }
   });
 });
