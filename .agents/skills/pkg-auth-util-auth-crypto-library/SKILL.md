@@ -103,10 +103,11 @@ depend on those folders being present.
 - `index.d.ts` must stay aligned with every public export in `index.js`.
 - `lib/jwtUtilAuth.js` owns JWT creation, service-to-service JWT creation,
   verification, and decomposition.
-- `lib/pwdUtilAuth.js` owns password hashing and saved-hash verification.
+- `lib/jwkUtilAuth.js` owns strict signing-JWK and verification-JWKS parsing.
+- `lib/pwdUtilAuth.js` owns password keyring parsing and versioned credential
+  hashing and verification.
 - `lib/cryptoUtilAuth.js` wraps Node.js `crypto` primitives for signing,
   verifying, generating HMACs, and salts.
-- `lib/keyGen.js` owns Ed25519 and RSA key generation.
 - `lib/stringUtilAuth.js` owns legacy base64, base64-url-safe, and JWT string
   helpers. Password-hash parsing stays private to `lib/pwdUtilAuth.js`.
 - Keep direct exports as the public package API. Do not add password aliases,
@@ -116,10 +117,15 @@ depend on those folders being present.
 
 ## JWT Layer
 
-- Use EdDSA/Ed25519 as the default JWT algorithm unless a task explicitly
-  changes crypto behavior.
-- Preserve standardized headers and payload behavior, including automatic `iat`
-  and `exp` population where the existing API does that.
+- Accept only parsed Ed25519 signing JWKs and verification JWKS values. Do not
+  add PEM, RSA, algorithm-selection, missing-`kid`, or single-key fallbacks.
+- Derive every `kid` as the RFC 7638 SHA-256 base64url thumbprint of canonical
+  `{ "crv": "Ed25519", "kty": "OKP", "x": ... }` members.
+- Require exact JWK metadata: `alg: "EdDSA"`, `use: "sig"`, and one `key_ops`
+  value (`sign` for private keys, `verify` for public keys). Ensure private and
+  public key material agree before accepting signing configuration.
+- Create JWTs with the fixed `{ alg: "EdDSA", typ: "JWT", kid }` header and
+  verify by selecting the exact public key named by `kid`.
 - Keep service-to-service JWT creation here, not in `@carecard/jwt-read`.
   Public service-token creation exports are `jwtCreateServiceToken` and
   `jwtCreateServiceAuthorizationHeader`.
@@ -143,17 +149,22 @@ depend on those folders being present.
   $argon2id$v=19$m=19456,t=2,p=1$base64(salt)$base64(tag)
   ```
 
-- `createPasswordHash(password, pepper)` and
-  `verifyPassword(password, savedHash, pepper)` are the only public password
-  credential APIs; both are asynchronous.
+- `parsePasswordHashKeyring(activeKeyId, serializedKeyring)`,
+  `createPasswordCredential(password, keyring)`, and
+  `verifyPasswordCredential(password, credential, keyring)` are the only
+  public password credential APIs. Keyring entries are comma-separated
+  `key-id:canonical-base64-32-byte-key` values.
+- Persist the returned `hash` and `hashKeyId` together. Verification returns
+  `{ isValid, needsRehash }`; `needsRehash` is true only after a valid retiring
+  key credential is verified.
 - Generate salts internally for every credential. Never accept caller-selected
   salts and never persist or log the pepper.
 - Normalize well-formed Unicode passwords to NFC before deriving the tag, but
   do not trim or impose password policy here. `@carecard/validate` owns policy,
   while login intentionally permits existing passwords of any length.
-- Return `false` for malformed, non-canonical, differently parameterized, or
-  legacy saved hashes. Throw for programmer/configuration errors such as an
-  invalid pepper.
+- Return an invalid verification result for unknown key IDs, malformed,
+  non-canonical, differently parameterized, or legacy saved hashes. Throw for
+  programmer/configuration errors such as an invalid keyring.
 - Do not add legacy HMAC verification. Seeded accounts must be rehashed before
   the Argon2id-only service starts.
 - Prefer Node.js `crypto` primitives over new dependencies.

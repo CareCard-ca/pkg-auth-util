@@ -25,9 +25,8 @@ Non-negotiable code organization rule: Functions with the same or equivalent beh
 
 ## Features
 
-- **JWT Utilities**: Create, verify, and parse JSON Web Tokens with support for EdDSA (Ed25519) and RSA.
-- **Password Utilities**: Asynchronous Argon2id password hashing through Node.js `crypto`, with a unique random salt and application pepper.
-- **Key Generation**: Generate Ed25519 and RSA key pairs for JWT signing.
+- **JWT Utilities**: Create and verify EdDSA JWTs through strict Ed25519 JWK and JWKS configuration.
+- **Password Utilities**: Rotate versioned Argon2id password peppers while preserving a strict saved-credential format.
 - **Crypto Utilities**: Low-level cryptographic primitives for signing, verification, and hashing.
 - **String Utilities**: Base64 and Base64UrlSafe encoding/decoding, and custom string parsing.
 
@@ -46,18 +45,17 @@ const {
   jwtCreateSignedToken,
   jwtGetHeaderPayload,
   jwtVerifySignedToken,
+  parseJwtSigningJwk,
+  parseJwtVerificationJwks,
 } = require('@carecard/auth-util');
 
-const header = { alg: 'EdDSA', typ: 'JWT' };
 const payload = { sub: '1234567890', name: 'John Doe' };
-const privateKey = '...'; // Your private PEM key
+const signingJwk = parseJwtSigningJwk(process.env.JWT_SIGNING_JWK);
+const verificationJwks = parseJwtVerificationJwks(process.env.JWT_VERIFICATION_JWKS);
 
-// Create a signed JWT
-const token = jwtCreateSignedToken(header, payload, privateKey);
+const token = jwtCreateSignedToken(payload, signingJwk);
 
-// Verify a JWT signature
-const publicKey = '...'; // Your public PEM key
-const isValid = jwtVerifySignedToken(token, publicKey);
+const isValid = jwtVerifySignedToken(token, verificationJwks);
 
 // Get header and payload from a JWT
 const { header: decodedHeader, payload: decodedPayload } = jwtGetHeaderPayload(token);
@@ -74,47 +72,51 @@ const {
 const token = jwtCreateServiceToken({
   issuer: 'ms-institutions',
   audience: 'ms-auth',
-  privateKey: institutionsPrivateKey,
+  signingJwk: institutionsSigningJwk,
 });
 
 const authorization = jwtCreateServiceAuthorizationHeader({
   issuer: 'ms-institutions',
   audience: 'ms-auth',
-  privateKey: institutionsPrivateKey,
+  signingJwk: institutionsSigningJwk,
 });
 ```
 
 ### Password Utilities
 
 ```javascript
-const { createPasswordHash, verifyPassword } = require('@carecard/auth-util');
+const {
+  createPasswordCredential,
+  parsePasswordHashKeyring,
+  verifyPasswordCredential,
+} = require('@carecard/auth-util');
 
 const password = 'correct horse battery staple';
-const pepper = process.env.MS_AUTH_HASH_KEY; // At least 32 UTF-8 bytes.
+const keyring = parsePasswordHashKeyring(
+  process.env.MS_AUTH_PASSWORD_HASH_ACTIVE_KEY_ID,
+  process.env.MS_AUTH_PASSWORD_HASH_KEYRING,
+);
 
-// Create a strict Argon2id PHC credential with a unique random salt.
-const savedHash = await createPasswordHash(password, pepper);
+const credential = await createPasswordCredential(password, keyring);
 
-// Verify through the package boundary. Malformed and legacy credentials return false.
-const isCorrect = await verifyPassword(password, savedHash, pepper);
+const result = await verifyPasswordCredential(password, credential, keyring);
+if (result.isValid && result.needsRehash) {
+  const replacement = await createPasswordCredential(password, keyring);
+  // Persist replacement.hash and replacement.hashKeyId atomically.
+}
 ```
 
-Both functions preserve password spaces and normalize well-formed Unicode to
-NFC. Password-policy checks belong to `@carecard/validate`; this package hashes
-and compares the supplied value without enforcing password length or
-composition. Keep the pepper outside persisted credentials and logs.
+Keyring entries use `key-id:canonical-base64-32-byte-key`, separated by commas.
+Credential rows persist both the PHC hash and its `hashKeyId`; pepper keys stay
+outside persisted credentials and logs. Passwords retain spaces and normalize
+well-formed Unicode to NFC. `@carecard/validate` owns password policy.
 
-### Key Generation
-
-```javascript
-const { generateKeyPair } = require('@carecard/auth-util');
-
-// Generate Ed25519 keys (default)
-const { publicKey, privateKey } = generateKeyPair();
-
-// Generate RSA keys
-const rsaKeys = generateKeyPair('rsa');
-```
+JWT signing configuration is one strict private Ed25519 JWK. Verification
+configuration is an RFC 7517 JWKS containing one or more public Ed25519 JWKs.
+Every key uses `alg: "EdDSA"`, `use: "sig"`, one exact `key_ops` operation, and
+an RFC 7638 SHA-256 thumbprint `kid`. Add replacement public keys before
+switching signers, and retain retiring public keys for the maximum token
+lifetime plus clock skew.
 
 ### String Utilities (`stringUtilAuth`)
 
@@ -159,9 +161,9 @@ npm run test:types
 
 The package is organized into several modules:
 
-- `jwtUtilAuth`: Manages the JWT lifecycle.
-- `pwdUtilAuth`: Implements asynchronous Argon2id password hashing and verification behind the direct package exports.
-- `keyGen`: Utility for generating cryptographic keys.
+- `jwkUtilAuth`: Strictly parses private signing JWKs and public verification JWKS values.
+- `jwtUtilAuth`: Creates fixed-header Ed25519 JWTs and verifies signatures by `kid`.
+- `pwdUtilAuth`: Creates and verifies versioned Argon2id password credentials.
 - `cryptoUtilAuth`: Core cryptographic operations using Node.js `crypto` module.
 - `stringUtilAuth`: String manipulation and format conversions.
 
