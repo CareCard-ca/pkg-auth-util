@@ -1,6 +1,6 @@
 {
   "name": "@carecard/auth-util",
-  "version": "3.28.0",
+  "version": "3.29.0",
   "repository": "https://github.com/CareCard-ca/pkg-auth-util.git",
   "description": "Auth utility functions",
   "main": "index.js",
@@ -50,7 +50,7 @@
     "typescript": "6.0.3"
   },
   "dependencies": {
-    "@carecard/common-util": "3.28.0",
+    "@carecard/common-util": "3.29.0",
     "@carecard/validate": "3.28.0",
     "@types/express": "5.0.6"
   },
@@ -60,6 +60,6 @@
     "brace-expansion": "5.0.9",
     "minimatch": "10.2.6",
     "serialize-javascript": "7.0.5",
-    "js-yaml": "4.3.1"
+    "js-yaml": "4.3.2"
   }
 }
