@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@carecard/common-util": "3.29.0",
-    "@carecard/validate": "3.28.0",
+    "@carecard/validate": "3.29.0",
     "@types/express": "5.0.6"
   },
   "overrides": {
