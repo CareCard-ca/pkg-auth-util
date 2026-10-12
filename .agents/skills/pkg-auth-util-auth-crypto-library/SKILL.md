@@ -159,9 +159,11 @@ depend on those folders being present.
   key credential is verified.
 - Generate salts internally for every credential. Never accept caller-selected
   salts and never persist or log the pepper.
-- Normalize well-formed Unicode passwords to NFC before deriving the tag, but
-  do not trim or impose password policy here. `@carecard/validate` owns policy,
-  while login intentionally permits existing passwords of any length.
+- Normalize password edge whitespace through `@carecard/validate`, then NFC,
+  before deriving the tag. Creation and verification use identical canonical
+  bytes; preserve internal spaces. `@carecard/validate` owns password policy.
+  Trim outer signed-token whitespace before verification or decomposition,
+  preserving the signed contents and canonical signature encoding checks.
 - Return an invalid verification result for unknown key IDs, malformed,
   non-canonical, differently parameterized, or legacy saved hashes. Throw for
   programmer/configuration errors such as an invalid keyring.

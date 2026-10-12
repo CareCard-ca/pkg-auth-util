@@ -13,7 +13,7 @@ const {
 const { serializeIdentity } = require('./keys/keys');
 
 describe('security regressions', function () {
-  it('does not trim passwords before hashing or verification', async function () {
+  it('trims passwords before hashing and verification', async function () {
     const key = Buffer.alloc(32, 9).toString('base64');
     const keyring = parsePasswordHashKeyring('active', `active:${key}`);
     const credential = await createPasswordCredential(' password phrase ', keyring);
@@ -24,7 +24,7 @@ describe('security regressions', function () {
     );
     assert.strictEqual(
       (await verifyPasswordCredential('password phrase', credential, keyring)).isValid,
-      false,
+      true,
     );
   });
 

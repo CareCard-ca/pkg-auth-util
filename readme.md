@@ -122,8 +122,10 @@ if (result.isValid && result.needsRehash) {
 
 Keyring entries use `key-id:canonical-base64-32-byte-key`, separated by commas.
 Credential rows persist both the PHC hash and its `hashKeyId`; pepper keys stay
-outside persisted credentials and logs. Passwords retain spaces and normalize
-well-formed Unicode to NFC. `@carecard/validate` owns password policy.
+outside persisted credentials and logs. Passwords trim edge whitespace and
+normalize well-formed Unicode to NFC, preserving internal spaces.
+`@carecard/validate` owns password policy. Signed token verification and
+decomposition trim outer whitespace without rewriting signed token contents.
 
 JWT signing configuration is one strict private Ed25519 JWK. Verification
 configuration is an RFC 7517 JWKS containing one or more public Ed25519 JWKs.
