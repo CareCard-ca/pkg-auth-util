@@ -17,7 +17,8 @@
     "forceConsistentCasingInFileNames": true,
     "paths": {
       "@carecard/auth-util": ["./index.d.ts"]
-    }
+    },
+    "types": ["node", "mocha"]
   },
   "include": ["index.d.ts", "test/**/*.ts"],
   "exclude": ["node_modules"]

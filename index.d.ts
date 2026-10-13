@@ -2,8 +2,6 @@
  * Utility functions for authentication and authorization in the CareCard ecosystem.
  */
 
-import type { Request } from 'express';
-
 /**
  * Represents the standard JWT header structure.
  */
@@ -33,9 +31,6 @@ export interface JwtPayload {
   auth_time?: number;
   /** Subject (usually the client ID). */
   sub?: string;
-  /** Roles assigned to the user. */
-  roles?: string[];
-
   /** Any other custom payload fields. */
   [key: string]: unknown;
 }
@@ -44,11 +39,11 @@ export interface JwtPayload {
  * Claims used by service-to-service JWTs.
  */
 export interface ServiceJwtPayload extends JwtPayload {
-  /** Issuing microservice name, for example 'ms-institutions'. */
+  /** Caller-selected issuer identifier. */
   iss: string;
-  /** Receiving microservice name or names. */
+  /** Caller-selected audience identifier or identifiers. */
   aud: string | string[];
-  /** Subject. Defaults to the issuing microservice name. */
+  /** Subject. Defaults to the issuer name. */
   sub: string;
 }
 
@@ -56,11 +51,11 @@ export interface ServiceJwtPayload extends JwtPayload {
  * Options for creating a service-to-service JWT.
  */
 export interface ServiceJwtOptions {
-  /** Issuing microservice name, for example 'ms-institutions'. */
+  /** Caller-selected issuer identifier. */
   issuer: string;
-  /** Receiving microservice name or names. */
+  /** Caller-selected audience identifier or identifiers. */
   audience: string | string[];
-  /** Parsed private Ed25519 JWK owned by the issuing microservice. */
+  /** Parsed private Ed25519 JWK owned by the issuer. */
   signingJwk: JwtSigningJwk;
   /** Subject claim. Defaults to issuer. */
   subject?: string;
@@ -80,36 +75,6 @@ export interface JwtParts {
   header: JwtHeader;
   /** Decoded JWT payload. */
   payload: JwtPayload;
-}
-
-/**
- * Structure of the JWT object attached to the request.
- */
-export interface JwtRequestObject {
-  header: JwtHeader;
-  payload: JwtPayload;
-  age?: number;
-  jwtClientId: (req?: AuthenticatedRequest) => string | undefined;
-  doesJwtUserHasRole: (role: string) => boolean;
-  isJwtExpired: (jwtValiditySeconds?: number) => boolean;
-  jwtAgeInSeconds: (req?: AuthenticatedRequest) => number;
-}
-
-/**
- * Structure of the visitor object attached to the request.
- */
-export interface VisitorRequestObject {
-  header: JwtHeader;
-  payload: JwtPayload;
-  visitorClientId: (req?: AuthenticatedRequest) => string | undefined;
-}
-
-/**
- * Extended Express Request to include jwt and visitor objects.
- */
-export interface AuthenticatedRequest extends Request {
-  jwt?: JwtRequestObject | null;
-  visitor?: VisitorRequestObject | null;
 }
 
 declare const jwtSigningJwkBrand: unique symbol;
