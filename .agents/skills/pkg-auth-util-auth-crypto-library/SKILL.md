@@ -19,6 +19,21 @@ Non-negotiable TypeScript type rule: Never use the TypeScript type `any`; always
 
 Non-negotiable code organization rule: Functions with the same or equivalent behavior must use the same or clearly corresponding descriptive names across CareCard repositories, and equivalent functionality must live in files with the same names within each repository's established architecture. No backward compatibility names, aliases, or duplicate locations are allowed.
 
+## Non-Negotiable Package Independence
+
+`pkg-*` must always be agnostic to roles and the inner workings of `ms-*` and
+`app-*`. Packages must not own business role codes, permissions, workflow
+states, domain payload schemas, database caller contexts, application routes,
+or application-specific policy defaults. Those contracts belong to their
+owning services and applications.
+
+Keep packages limited to reusable technical mechanisms. Accept explicit
+caller-supplied schemas, parsers, policy configuration, identities, and opaque
+custom claims where needed. Never import a service or application, copy its
+business catalogue into a package, infer privilege from custom claims, or add
+caller-name branches. Preserve consumer behavior in owner-local adapters and
+validate both the generic package contract and the owning public boundaries.
+
 ## Purpose
 
 CareCard auth utility package for JWT creation/verification primitives, password hashing, crypto helpers, key generation, and tests.
@@ -131,9 +146,8 @@ depend on those folders being present.
   `jwtCreateServiceAuthorizationHeader`.
 - Do not silently change token timing behavior, token formats, JWT string
   assembly, signature verification semantics, or decomposition return shapes.
-- Preserve application JWT payload claims, including the `roles` array.
-  `ms-auth` RLS treats `roles: ["ad"]` as the auth-service super-admin signal,
-  so JWT helpers must not hide, rename, or drop that role data.
+- Preserve arbitrary custom payload claims without interpreting business roles,
+  application flags, or database privileges. Owner services define their meaning.
 - Expected parse and verify failures should return `null` or `false` where the
   current public API does so.
 
@@ -161,7 +175,7 @@ depend on those folders being present.
   salts and never persist or log the pepper.
 - Normalize password edge whitespace through `@carecard/validate`, then NFC,
   before deriving the tag. Creation and verification use identical canonical
-  bytes; preserve internal spaces. `@carecard/validate` owns password policy.
+  bytes; preserve internal spaces. Owning applications and services own password policy.
   Trim outer signed-token whitespace before verification or decomposition,
   preserving the signed contents and canonical signature encoding checks.
 - Return an invalid verification result for unknown key IDs, malformed,
