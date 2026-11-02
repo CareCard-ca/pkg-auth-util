@@ -5,7 +5,7 @@ const { describe, it } = require('mocha');
 const packageLock = require('../package-lock.json');
 const packageJson = require('../package.json');
 
-const SUPPORTED_GLOB_VERSION = '13.0.6';
+const SUPPORTED_GLOB_VERSION = '14.0.2';
 
 describe('Dependency overrides', function () {
   it('keeps every transitive glob dependency on the supported release', function () {

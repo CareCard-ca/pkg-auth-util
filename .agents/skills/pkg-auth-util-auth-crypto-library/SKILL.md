@@ -36,6 +36,11 @@ validate both the generic package contract and the owning public boundaries.
 
 ## Purpose
 
+The coordinated 3.45.0 dependency refresh is documented in
+[the security review](../../../docs/dependency-security-2026-11-01.md). Keep
+dependency inventory checks as audits and retain the full public behavior,
+type and coverage gates.
+
 CareCard auth utility package for JWT creation/verification primitives, password hashing, crypto helpers, key generation, and tests.
 
 ## When To Use
